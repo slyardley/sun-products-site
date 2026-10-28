@@ -1,0 +1,96 @@
+# This is the workflow for the NEW PUBLIC site repository. Save it there as:  .github/workflows/sunproducts.yml
+#
+# What it does: every hour it runs your connectivity script, then publishes a small website with
+#   index.html (the dashboard), the connectivity picture, the Sun image, and the last 24 h of AIA 193 frames, and the Met Office aurora forecast
+# to GitHub Pages. Nothing to edit. If a run fails, the previous version of the site stays up.
+
+name: Sun products
+
+on:
+  schedule:
+    - cron: "17 * * * *"        # hourly at 17 past (GitHub often skips or delays scheduled runs, so more frequent is safer;
+                                 # the minute is off the hour to avoid the busiest moment)
+  workflow_dispatch: {}          # also gives you a "Run workflow" button
+  push:
+    branches: [main]             # and any change you save to the repository rebuilds the site straight away
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20            # normal runs take 3 to 7 minutes; if something stalls, stop it so the next hourly run can go
+    steps:
+      - uses: actions/checkout@v4
+
+      # The research code lives in a PRIVATE repository (slyardley/sun-products). It is fetched into ./code for this
+      # run only, using a read-only token saved as the secret CODE_TOKEN. It is never copied into this public repository.
+      - name: Fetch the private code
+        uses: actions/checkout@v4
+        with:
+          repository: slyardley/sun-products
+          token: ${{ secrets.CODE_TOKEN }}
+          path: code
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"       # the version I tested the script with
+          cache: pip
+
+      # Keep the big downloads (about 150 MB of magnetograms) between runs, so each run only fetches what's new.
+      - name: Cache downloaded data
+        uses: actions/cache@v4
+        with:
+          path: |
+            hmi_frames
+            aia_jp2
+            fonts
+          key: data-${{ github.run_id }}
+          restore-keys: data-
+
+      # libopenjp2 lets the script read AIA images. It is usually already there, so try without refreshing the package list first.
+      - name: System packages
+        timeout-minutes: 5
+        run: sudo apt-get install -y --no-install-recommends libopenjp2-7 || (sudo apt-get update && sudo apt-get install -y --no-install-recommends libopenjp2-7)
+
+      - name: Python packages
+        run: pip install -r code/requirements.txt
+
+      - name: Build site
+        run: |
+          mkdir -p site
+          cp space_weather_dashboard.html site/index.html
+          python code/earth_connectivity.py --maps-only --no-url \
+            --ch-names-file code/ch_names.txt \
+            --sun-image site/sun_193_annotated_latest.png \
+            --share-image site/share_card.png \
+            --ch-json site/ch_outlines.json \
+            --frames-dir site/aia \
+            --frames-prev-url https://forecast.stephyardley.com \
+            --met-aurora-dir site \
+            --out site/earth_connectivity_now.png
+          ls -la site
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
