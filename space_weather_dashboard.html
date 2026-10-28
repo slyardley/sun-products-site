@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<!--
+  Solar Steph Space Weather Dashboard
+  © 2026 Dr Steph Yardley. All rights reserved.
+  The code, design and text of this page are not licensed for copying or reuse. To ask permission, please get in touch:
+  https://stephyardley.com/contact/
+  Data shown belongs to its providers (NOAA SWPC, NASA SDO, JSOC, Helioviewer, Met Office) and is used under their terms.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solar Steph Space Weather Dashboard</title>
+<meta name="author" content="Dr Steph Yardley">
+<meta name="copyright" content="© 2026 Dr Steph Yardley. All rights reserved.">
+<meta name="description" content="Live space weather from the Sun to Earth: solar wind, flares, radiation, geomagnetic activity and Earth's magnetic connection to the Sun.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Solar Steph">
+<meta property="og:title" content="Solar Steph Space Weather Dashboard">
+<meta property="og:description" content="Live Sun, solar wind, flares, radiation and geomagnetic activity, with Earth's magnetic connection to the Sun.">
+<meta property="og:url" content="https://forecast.stephyardley.com/">
+<meta property="og:image" content="https://forecast.stephyardley.com/share_card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Solar Steph Space Weather Dashboard">
+<meta name="twitter:description" content="Live Sun, solar wind, flares, radiation and geomagnetic activity, with Earth's magnetic connection to the Sun.">
+<meta name="twitter:image" content="https://forecast.stephyardley.com/share_card.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1020;
+  --card:#131a30;
+  --card-edge:#1f2947;
+  --text:#e8ecf6;
+  --muted:#8e99b8;
+  --grid:#222c4a;
+  --accent:#ff9a2e;          /* Solar Steph orange */
+  --pos:#3ddc97;             /* Bz north / calm */
+  --neg:#ff5d5d;             /* Bz south / storm */
+  --blue:#5aa9ff;
+  --violet:#b48cff;
+  --pink:#ff7eb6;
+  --amber:#ffc94d;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 20px 40px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:18px}
+h1{margin:0;font-size:clamp(28px,5.2vw,46px);font-weight:800;letter-spacing:-.02em;line-height:1.08;color:var(--accent)}
+.sub{margin:8px 0 0;color:var(--muted);font-size:13px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  background:var(--card);border:1px solid var(--card-edge);color:var(--muted);font-size:12px;font-weight:600;
+  font-family:inherit;cursor:pointer}
+button.pill:hover{color:var(--text)}
+button.pill:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1a1205}
+.scale{cursor:pointer;color:var(--text)}
+#scalepanel{margin-bottom:16px}
+#scalepanel[hidden]{display:none}
+.srows{display:grid;gap:12px;margin-top:10px}
+.srow{display:flex;gap:14px;align-items:flex-start;border-left:3px solid var(--c);padding-left:12px}
+.srow b{font-size:22px;color:var(--c);min-width:38px;line-height:1.1}
+.srow strong{display:block;font-size:14px}
+.srow span{display:block;font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px}
+.scale b{font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+
+/* now strip */
+.now{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--card-edge);border-radius:var(--radius);padding:14px 16px}
+.stat .k{font-size:12px;color:var(--muted);font-weight:500}
+.stat{border-top:3px solid var(--c)}
+.stat .v{color:var(--c);font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:4px;letter-spacing:0}
+.stat .n{font-size:12px;color:var(--muted);margin-top:2px;min-height:15px}
+
+/* layout */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (max-width:860px){.cols{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--card-edge);border-radius:var(--radius);padding:16px 16px 12px;min-width:0}
+.card h2{margin:0;font-size:15px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.rng{font-size:11.5px;font-weight:600;color:var(--muted);border:1px solid var(--card-edge);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.card .desc{margin:3px 0 10px;font-size:12.5px;color:var(--muted);line-height:1.45;max-width:62ch}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 4px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.meta{font-size:11.5px;color:var(--muted);margin-top:6px}
+.sublabel{font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 0}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:inherit;font-size:10.5px;fill:var(--muted)}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart .cl{stroke:#93a0c4;stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.tip{position:absolute;pointer-events:none;background:#0b1020ee;border:1px solid var(--card-edge);border-radius:10px;
+  padding:7px 10px;font-size:12px;line-height:1.5;white-space:nowrap;display:none;z-index:5;
+  font-variant-numeric:tabular-nums}
+.tip .t{color:var(--muted);font-size:11px}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.err{font-size:13px;color:var(--muted);padding:18px 4px}
+.conn img{display:block;width:100%;height:auto;border-radius:12px;background:#0b1020}
+.conn [hidden]{display:none}
+.conn .empty{padding:40px 16px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--card-edge);border-radius:12px}
+
+
+
+/* summary */
+.summary{margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:6px 18px;align-items:start}
+@media (max-width:700px){.summary{grid-template-columns:1fr}}
+.summary .lvl{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.summary .lvl small{display:block;font-size:12px;font-weight:500;letter-spacing:0;color:var(--muted);margin-top:4px;max-width:20ch}
+.summary ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.summary li{font-size:14px;line-height:1.5;border-left:3px solid var(--c);padding-left:11px}
+.summary li b{color:var(--c)}
+.summary .num{color:var(--c);font-weight:700}
+.summary li b{font-weight:700;margin-right:6px}
+
+/* sun panel */
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:start}
+.hero .card{min-width:0}
+@media (max-width:860px){.hero{grid-template-columns:1fr}}
+.sunhead{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs .pill{padding:5px 11px}
+.stage{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:1/1}
+.stage canvas,.stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage video{object-fit:contain;background:#000}
+.stage svg{pointer-events:none}
+.stage svg text{font-family:inherit;font-weight:700;paint-order:stroke;stroke:#000;stroke-width:4px;stroke-linejoin:round;fill:#fff}
+.stage .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);font-size:13px}
+.bar{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.bar input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.bar .t{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:112px}
+.sun [hidden],.conn [hidden]{display:none !important}
+
+
+
+/* one-line outlooks inside the X-ray and proton cards */
+.oline{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.5}
+.oline b{font-weight:700}
+/* (old 3-day tiles, no longer used) */
+.otile{background:#0f1630;border:1px solid var(--card-edge);border-radius:14px;padding:12px 16px;margin-top:10px}
+.otile .od{font-weight:700;font-size:15px;margin-bottom:6px}
+.orow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0;font-size:14px;color:var(--muted)}
+.orow .v{color:var(--text);display:flex;align-items:center;gap:10px;white-space:nowrap}
+.orow b{font-weight:700;font-size:17px}
+.gb{display:inline-block;padding:4px 10px;border-radius:10px;background:#2a3350;color:var(--text);font-size:12.5px;font-weight:700}
+.metline{margin:2px 0 10px;font-size:13.5px;line-height:1.5}
+.metline small{display:block;margin-top:3px;font-size:11.5px;color:var(--muted)}
+/* aurora + Met Office outlook */
+.mrow{border-left:3px solid #8bd450;padding-left:12px;margin:12px 0 0}
+.mrow b{display:block;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#8bd450;margin-bottom:3px}
+.mrow p{margin:0;font-size:13.5px;line-height:1.55}
+.mrow small{display:block;margin-top:3px;font-size:11.5px;color:var(--muted)}
+.attr{margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.5}
+.attr a{color:var(--accent);text-decoration:none}
+.attr a:hover{text-decoration:underline}
+
+/* explainer */
+.faq{margin-top:16px}
+.faq .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+@media (max-width:860px){.faq .grid{grid-template-columns:1fr}}
+.faq details{background:#0f1630;border:1px solid var(--card-edge);border-left:3px solid var(--c);border-radius:12px;padding:10px 14px}
+.faq summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--c);list-style:none;display:flex;justify-content:space-between;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--muted);font-weight:500}
+.faq details[open] summary::after{content:"–"}
+.faq summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+.faq details p,.faq details ul{margin:8px 0 2px;font-size:13.5px;line-height:1.55;color:var(--text)}
+.faq details ul{padding-left:18px}
+.faq .note{margin:12px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
+
+/* legal */
+.legal{margin:12px 0 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
+.legal a{color:var(--accent);text-decoration:none}
+.legal a:hover{text-decoration:underline}
+footer{margin-top:22px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <h1><span class="brand">Solar Steph</span> Space Weather Dashboard</h1>
+      <p class="sub">Live conditions from the Sun to Earth, with Earth's magnetic connection to the solar surface.</p>
+    </div>
+    <div class="controls">
+      <button class="pill scale" id="scales" aria-expanded="false" aria-controls="scalepanel" title="What do R, S and G mean? Tap to find out"></button>
+      <span class="pill" role="group" aria-label="Time range" style="padding:3px;gap:2px">
+        <button class="pill" data-h="6"  aria-pressed="false" style="border:0">6 h</button>
+        <button class="pill" data-h="24" aria-pressed="true"  style="border:0">24 h</button>
+        <button class="pill" data-h="72" aria-pressed="false" style="border:0">3 days</button>
+      </span>
+      <span class="pill" id="upd"><span class="dot"></span><span id="updtxt">Loading…</span></span>
+    </div>
+  </div>
+
+  <section class="card" id="scalepanel" hidden></section>
+
+  <section class="card summary" id="summary" aria-live="polite">
+    <div class="lvl" id="sum-lvl">Loading…</div>
+    <ul id="sum-list"></ul>
+  </section>
+
+  <div class="now" id="now"></div>
+
+<div class="hero">
+    <section class="card sun" id="c-sun">
+      <div class="sunhead">
+        <h2>The Sun <span class="rng">SDO/AIA 193 Å</span></h2>
+        <div class="tabs" role="group" aria-label="Layers">
+          <button class="pill" id="chbtn" aria-pressed="true" title="Show coronal hole outlines">Coronal holes</button>
+          <button class="pill" id="arbtn" aria-pressed="true" title="Show NOAA numbered active regions">Active regions</button>
+        </div>
+      </div>
+      <div class="stage" id="stage">
+        <canvas id="suncv" width="700" height="700" role="img" aria-label="Sun in extreme ultraviolet light (AIA 193 Å)"></canvas>
+        <svg id="sunov" viewBox="0 0 700 700" aria-hidden="true"></svg>
+        <div class="msg" id="sunmsg" hidden></div>
+      </div>
+      <div class="bar" id="loopbar" hidden>
+        <button class="pill" id="playbtn" aria-label="Play the last 24 hours">▶ Play last 24 h</button>
+        <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Time">
+        <span class="t" id="looptime"></span>
+        <button class="pill" id="nowbtn" aria-label="Jump to the latest image">Latest</button>
+      </div>
+      <div class="meta" id="m-sun"></div>
+    </section>
+
+    <section class="card sun" id="c-corona">
+      <div class="sunhead">
+        <h2>The corona <span class="rng">CCOR-2 · white light</span></h2>
+      </div>
+      <div class="stage" id="cstage">
+        <canvas id="ccv" width="1204" height="1205" role="img" aria-label="The Sun's outer atmosphere seen by a coronagraph (CCOR-2)"></canvas>
+        <div class="msg" id="cmsg" hidden></div>
+      </div>
+      <div class="bar" id="cbar" hidden>
+        <button class="pill" id="cplay" aria-label="Play the last 24 hours">▶ Play last 24 h</button>
+        <input type="range" id="cscrub" min="0" max="0" value="0" aria-label="Time">
+        <span class="t" id="ctime"></span>
+        <button class="pill" id="cnow" aria-label="Jump to the latest image">Latest</button>
+      </div>
+      <div class="meta" id="m-cor">A coronagraph blocks the Sun's bright disc (the white circle marks its size) so the faint outer atmosphere shows. Streamers are normal. Clouds that brighten and move outward can be coronal mass ejections (CMEs). NOAA's CCOR-2 on the SOLAR-1 spacecraft, which also provides the solar wind data above. Hourly pictures from NOAA SWPC.</div>
+    </section>
+  </div>
+
+  <div class="cols">
+    <div class="col">
+    
+
+    <section class="card" id="c-xray">
+        <h2>X-ray flux <span class="rng" id="tag-xray"></span></h2>
+        <p class="desc">Flares show up as sudden jumps. Letters mark the flare class: A, B, C, M, then X for the strongest.</p>
+        <div class="legend"><span><i style="background:var(--accent)"></i>0.1–0.8 nm (flare class)</span><span><i style="background:var(--blue)"></i>0.05–0.4 nm</span></div>
+        <div class="chart" id="ch-xray"></div>
+        <div class="oline" id="o-xray"></div>
+        <div class="meta" id="m-xray"></div>
+      </section>
+
+    <section class="card" id="c-prot">
+        <h2>Proton flux <span class="rng" id="tag-prot"></span></h2>
+        <p class="desc">Energetic particles from the Sun. Radiation storms (S1 and above) begin when the ≥10 MeV flux reaches 10 pfu.</p>
+        <div class="legend"><span><i style="background:var(--amber)"></i>≥10 MeV</span><span><i style="background:var(--pink)"></i>≥50 MeV</span><span><i style="background:var(--violet)"></i>≥100 MeV</span></div>
+        <div class="chart" id="ch-prot"></div>
+        <div class="oline" id="o-prot"></div>
+        <div class="meta" id="m-prot"></div>
+      </section>
+
+    <section class="card sun" id="c-aurora">
+      <div class="sunhead">
+        <h2>Aurora oval <span class="rng">Met Office · pink ring = UK</span></h2>
+      </div>
+      <div class="metline" id="metline" hidden></div>
+      <div class="stage" id="astage" style="background:#fff">
+        <canvas id="acv" width="900" height="900" role="img" aria-label="Forecast of the auroral oval over the northern hemisphere from the Met Office"></canvas>
+        <svg id="aov" viewBox="0 0 900 900" aria-hidden="true"></svg>
+        <div class="msg" id="amsg" hidden></div>
+      </div>
+      <div class="bar" id="abar" hidden>
+        <button class="pill" id="aplay" aria-label="Play the four day forecast">▶ Play 4 days</button>
+        <input type="range" id="ascrub" min="0" max="0" value="0" aria-label="Forecast time">
+        <span class="t" id="atime"></span>
+        <button class="pill" id="anow" aria-label="Jump to the frame nearest to now">Now</button>
+      </div>
+
+      <p class="attr" style="margin-top:10px">Met Office. Contains public sector information licensed under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noopener">Open Government Licence v3.0</a>. <a href="https://weather.metoffice.gov.uk/specialist-forecasts/space-weather" target="_blank" rel="noopener">Full forecast</a>.</p>
+    </section>
+    </div>
+    <div class="col">
+    <section class="card conn">
+        <h2>Earth Solar Wind Connectivity</h2>
+        <p class="desc">Where the solar wind reaching Earth most likely left the Sun, from tracing the magnetic field back from L1.</p>
+        <img id="connimg" alt="Earth solar wind connectivity map" src="earth_connectivity_now.png">
+        <div class="empty" id="connempty" hidden>Add <b>earth_connectivity_now.png</b> next to this page to show the latest connectivity slide.</div>
+      </section>
+
+    <section class="card" id="c-wind">
+        <h2>Solar wind at L1 <span class="rng" id="tag-wind"></span></h2>
+        <p class="desc">Measured about 1.5 million km sunward of Earth, roughly an hour before it arrives.</p>
+        <div class="sublabel">Speed (km/s)</div><div class="chart" id="ch-speed"></div>
+        <div class="sublabel">Density (protons/cm³)</div><div class="chart" id="ch-dens"></div>
+        <div class="sublabel">Magnetic field (nT)</div>
+        <div class="legend"><span><i style="background:#fff"></i>Bt (total)</span><span><i style="background:var(--pos)"></i>Bz northward</span><span><i style="background:var(--neg)"></i>Bz southward</span></div>
+        <div class="chart" id="ch-mag"></div>
+        <div class="meta" id="m-wind"></div>
+      </section>
+
+    <section class="card" id="c-kp">
+        <h2>Geomagnetic activity (Kp) <span class="rng" id="tag-kp"></span></h2>
+        <p class="desc">Three-hourly planetary Kp, with NOAA's forecast for the next three days. Kp 5 or more is a geomagnetic storm (G1).</p>
+        <div class="chart" id="ch-kp"></div>
+        <div class="meta" id="m-kp"></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="card faq" id="faq">
+    <h2>What do these mean?</h2>
+    <p class="desc">Short plain-English guides to everything on this page. Tap a heading to open it.</p>
+    <div class="grid">
+      <details style="--c:#ff9a2e"><summary>Solar wind speed and density</summary>
+        <p>The solar wind is the stream of charged particles flowing from the Sun. It is often around 300 to 450 km/s. Speeds above about 500 km/s count as fast, and these streams often come from coronal holes. A sudden jump in density or speed can mean a disturbance such as the edge of a fast stream or a coronal mass ejection (CME) is passing the spacecraft.</p></details>
+      <details style="--c:#ff9a2e"><summary>Magnetic field: Bt and Bz</summary>
+        <p><b>Bt</b> is the total strength of the magnetic field carried by the solar wind, usually a few nT. <b>Bz</b> is its north-south part. When Bz points <b>south</b> (negative), the solar wind connects more easily to Earth's magnetic field, so geomagnetic activity and aurora become more likely. Strongly negative Bz (around −5 nT or lower) lasting for hours matters most, especially with fast wind.</p></details>
+      <details style="--c:#8bd450"><summary>Kp and the G scale</summary>
+        <p>Kp is a 0 to 9 measure of how disturbed Earth's magnetic field is, updated every three hours. Kp 5 is a minor geomagnetic storm (G1), Kp 6 is G2, 7 is G3, 8 is G4, and 9 is G5. Aurora is usually seen at higher latitudes first. In the UK it is more often seen from the north at Kp 5 or above, and further south as Kp rises. Clear, dark skies matter as much as the number.</p></details>
+      <details style="--c:#ff6b81"><summary>X-ray flux and flare classes</summary>
+        <p>Solar flares are ranked by their peak X-ray brightness: A, B, C, M and X, each ten times stronger than the one before. The number is a multiplier, so an X2 is twice an X1. C-class flares are common and usually have little effect at Earth. M and X flares can cause radio blackouts on the sunlit side of Earth: M1 is R1, M5 is R2, X1 is R3, X10 is R4 and X20 is R5.</p></details>
+      <details style="--c:#ffc94d"><summary>Proton flux and radiation storms</summary>
+        <p>Protons accelerated by flares and CMEs can reach Earth within minutes to hours. A radiation storm (S1 or above) begins when the flux of protons above 10 MeV reaches 10 pfu (particles per cm² per second per steradian). S2 is 100, S3 is 1,000, S4 is 10,000 and S5 is 100,000. These mostly matter for satellites, astronauts and high-latitude flights, rather than for people on the ground.</p></details>
+      <details style="--c:#5aa9ff"><summary>Active regions</summary>
+        <p>Active regions are the Sun's sunspot groups. NOAA gives each a number (for example AR4560) and a magnetic class. Simple groups (alpha, beta) rarely produce big flares, while more complex classes (beta-gamma, delta) are more likely to. Where a region sits on the disc also matters. Flares and CMEs from regions near the centre are more likely to be aimed at Earth.</p></details>
+      <details style="--c:#ff9a2e"><summary>Coronal holes</summary>
+        <p>Coronal holes are the dark patches in the AIA 193 Å image. The Sun's magnetic field is open there, so fast solar wind streams out. A hole facing Earth can send a fast stream that typically arrives a few days later. On the picture the outline colour shows the hole's magnetic polarity: pink is positive (field pointing outward) and blue is negative. Holes are labelled by where they sit on the disc.</p></details>
+      <details style="--c:#8bd450"><summary>The aurora oval map</summary>
+        <p>The auroral oval is the ring around the magnetic pole where aurora is most likely. It grows and moves towards the equator when geomagnetic activity rises. On the map the colour shows the forecast chance of aurora, with the ring pink on the map marking the UK. Because aurora is high up, it can sometimes be seen low on the northern horizon from further south than the band itself, in dark and clear skies. Cloud and moonlight matter as much as the forecast.</p></details>
+      <details style="--c:#ff9a2e"><summary>The corona and CMEs</summary>
+        <p>The corona is the Sun's outer atmosphere, which is far fainter than the Sun's disc. A coronagraph blocks the disc so the corona shows up. A coronal mass ejection (CME) appears as a cloud that brightens and moves outward over several frames. Whether it is aimed at Earth is hard to tell from one view. Forecasters combine coronagraph images with other data to judge that, and a CME that is Earth-directed usually takes a day or more to arrive.</p></details>
+      <details style="--c:#ff9a2e"><summary>The connectivity map</summary>
+        <p>It shows where on the Sun the solar wind reaching Earth most likely came from. The wind measured at L1 is traced back along the Sun's magnetic field using a computer model. The white outlines mark where most of the traced field lines land, and the confidence label is a rough guide to how tightly they cluster. It is a research-style estimate, not a measurement, so treat it with care.</p></details>
+      <details style="--c:#ff9a2e"><summary>What is L1?</summary>
+        <p>L1 is a point about 1.5 million km from Earth towards the Sun, where spacecraft measure the solar wind before it reaches us. At typical speeds that gives roughly an hour of warning, which is why the numbers at the top are a nowcast and not a forecast.</p></details>
+    </div>
+    <p class="note">This page is for interest and education. It is not an official forecast and should not be used for operational decisions. For official alerts and forecasts see NOAA's Space Weather Prediction Center and the Met Office. Data may occasionally be delayed or missing.</p>
+  </section>
+
+  <footer>
+    <span>Data: NOAA Space Weather Prediction Center (real-time solar wind, GOES X-ray and protons, Kp). Times in UTC. Not an official forecast.</span>
+    <span>Dr Steph Yardley · <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noopener">NOAA SWPC</a> for official alerts</span>
+  </footer>
+  <p class="legal">© 2026 Dr Steph Yardley. All rights reserved. The code, design and written text of this page may not be copied or reused without permission. Please <a href="https://stephyardley.com/contact/" target="_blank" rel="noopener">get in touch</a> to ask. The data shown belongs to its providers and is used under their terms.</p>
+</div>
+
+<script>
+/* ============ Config ============ */
+const CONFIG = {
+  base: "https://services.swpc.noaa.gov",
+  refreshSeconds: 120,
+  connectivityImage: "earth_connectivity_now.png",  // change to wherever you host the latest slide
+  framesUrl: "aia_frames.json",     // hourly AIA 193 frames for the last 24 h (made by the hourly job)
+  chUrl: "ch_outlines.json",        // coronal hole outlines from the latest detection (made by the hourly job)
+  auroraUrl: "met_aurora.json",        // Met Office aurora forecast frames + text (made by the hourly job)
+  coronaDir: "https://services.swpc.noaa.gov/images/animations/ccor2/",   // NOAA coronagraph frames (every 15 min)
+  sdoLatest: "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg",
+};
+const EP = {
+  wind:   "/json/rtsw/rtsw_wind_1m.json",
+  mag:    "/json/rtsw/rtsw_mag_1m.json",
+  xray:   "/json/goes/primary/xrays-3-day.json",
+  prot:   "/json/goes/primary/integral-protons-3-day.json",
+  kp:     "/products/noaa-planetary-k-index-forecast.json",
+  scales: "/products/noaa-scales.json",
+  regions:"/json/solar_regions.json",
+  probs:  "/json/solar_probabilities.json",
+  suvi:   "/products/animations/suvi-primary-195.json"
+};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = {accent:css("--accent"),pos:css("--pos"),neg:css("--neg"),blue:css("--blue"),violet:css("--violet"),
+           pink:css("--pink"),amber:css("--amber"),muted:css("--muted")};
+
+const CAT={wind:"#ff9a2e",geo:"#8bd450",flare:"#ff6b81",rad:"#ffc94d",ar:"#5aa9ff"};   // one colour per topic, used by the numbers strip and the summary
+let RANGE_H = 24;
+let DATA = {};
+
+/* ============ Helpers ============ */
+const tms = s => Date.parse(/Z$|[+-]\d\d:?\d\d$/.test(s) ? s : s + "Z");
+const pad = n => String(n).padStart(2,"0");
+const hhmm = t => { const d=new Date(t); return pad(d.getUTCHours())+":"+pad(d.getUTCMinutes()); };
+const DAY = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const dayLbl = t => { const d=new Date(t); return DAY[d.getUTCDay()]+" "+d.getUTCDate(); };
+const fullT = t => dayLbl(t)+" "+hhmm(t)+" UTC";
+const num = v => (v===null||v===undefined||v==="") ? null : +v;
+
+function flareClass(f){
+  if(!(f>0)) return "–";
+  let L,b;
+  if(f<1e-7){L="A";b=1e-8} else if(f<1e-6){L="B";b=1e-7} else if(f<1e-5){L="C";b=1e-6}
+  else if(f<1e-4){L="M";b=1e-5} else {L="X";b=1e-4}
+  return L+(f/b).toFixed(1);
+}
+function fmtPfu(v){
+  if(!(v>=0)) return "–";
+  if(v>=100) return v.toFixed(0);
+  if(v>=10) return v.toFixed(1);
+  if(v>=1) return v.toFixed(2);
+  return v.toPrecision(2);
+}
+function sLevel(f){ return f>=1e5?5:f>=1e4?4:f>=1e3?3:f>=100?2:f>=10?1:0; }
+const SCALE_COL = ["#3ddc97","#ffd54d","#ffb02e","#ff8a3d","#ff5d5d","#d6336c"];
+
+function niceTicks(lo,hi,n){
+  const raw=(hi-lo)/n, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const step=[1,2,2.5,5,10].map(s=>s*mag).find(s=>s>=raw)||raw;
+  const a=Math.floor(lo/step)*step, b=Math.ceil(hi/step)*step, t=[];
+  for(let v=a; v<=b+step*1e-6; v+=step) t.push(+v.toFixed(10));
+  return {y0:a,y1:b,ticks:t};
+}
+function xTicks(t0,t1){
+  const h=(t1-t0)/36e5, step=h<=7?1:h<=13?2:h<=25?4:12, ms=step*36e5, out=[];
+  for(let t=Math.ceil(t0/ms)*ms; t<=t1; t+=ms) out.push(t);
+  return out;
+}
+function downsample(pts,max=700){
+  if(pts.length<=max) return pts;
+  const k=Math.ceil(pts.length/max), out=[];
+  for(let i=0;i<pts.length;i+=k) out.push(pts[i]);
+  if(out[out.length-1]!==pts[pts.length-1]) out.push(pts[pts.length-1]);
+  return out;
+}
+function nearest(pts,t){
+  let lo=0,hi=pts.length-1;
+  while(hi-lo>1){const m=(lo+hi)>>1; if(pts[m][0]<t) lo=m; else hi=m;}
+  return Math.abs(pts[lo][0]-t)<=Math.abs(pts[hi][0]-t)?pts[lo]:pts[hi];
+}
+
+/* ============ Chart engine (inline SVG, no libraries) ============ */
+let uid=0;
+function lineChart(el,o){
+  const W=720,H=o.h||140,m={l:48,r:10,t:8,b:20},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  const [t0,t1]=o.t, id="c"+(++uid);
+  const f=o.log?Math.log10:(v=>v);
+  const [y0,y1]=o.y;
+  const X=t=>m.l+(t-t0)/(t1-t0)*iw;
+  const Y=v=>m.t+ih-(f(Math.min(Math.max(v,y0),y1))-f(y0))/(f(y1)-f(y0))*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.label||""}">`;
+  // y grid + labels
+  (o.ticks||[]).forEach(k=>{
+    const y=Y(k.v);
+    s+=`<line class="gl" x1="${m.l}" x2="${W-m.r}" y1="${y}" y2="${y}"/>`;
+    if(k.label!==undefined && !k.center) s+=`<text x="${m.l-6}" y="${y+3.5}" text-anchor="end">${k.label}</text>`;
+  });
+  (o.centerLabels||[]).forEach(k=>{
+    s+=`<text x="${m.l-6}" y="${Y(k.v)+3.5}" text-anchor="end" style="font-weight:600">${k.label}</text>`;
+  });
+  (o.hlines||[]).forEach(h=>{
+    const y=Y(h.v);
+    s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y}" y2="${y}" stroke="${h.color}" stroke-dasharray="4 4" opacity=".7"/>`;
+    s+=`<text x="${W-m.r-4}" y="${y-4}" text-anchor="end" style="fill:${h.color}">${h.label}</text>`;
+  });
+  // x grid + labels
+  xTicks(t0,t1).forEach(t=>{
+    const x=X(t), d=new Date(t), mid=d.getUTCHours()===0;
+    s+=`<line class="gl" x1="${x}" x2="${x}" y1="${m.t}" y2="${m.t+ih}" ${mid?'style="stroke:#33406a"':''}/>`;
+    s+=`<text x="${x}" y="${H-5}" text-anchor="middle" ${mid?'style="font-weight:700;fill:#c3cce6"':''}>${mid?dayLbl(t):hhmm(t)}</text>`;
+  });
+  const path=pts=>{
+    let d="",prev=null;
+    pts.forEach(p=>{
+      if(o.log && !(p[1]>0)){prev=null;return;}
+      d+=((prev===null||p[0]-prev>(o.gap||20*6e4))?"M":"L")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)+" ";
+      prev=p[0];
+    });
+    return d;
+  };
+  o.series.forEach(se=>{
+    const pts=downsample(se.pts.filter(p=>p[0]>=t0&&p[0]<=t1)); se._p=pts;
+    if(!pts.length) return;
+    const d=path(pts);
+    if(se.signed){
+      const yz=Y(0), first=X(pts[0][0]), last=X(pts[pts.length-1][0]);
+      const area=d+`L${last} ${yz} L${first} ${yz} Z`;
+      s+=`<clipPath id="${id}u"><rect x="${m.l}" y="${m.t}" width="${iw}" height="${Math.max(yz-m.t,0)}"/></clipPath>`;
+      s+=`<clipPath id="${id}d"><rect x="${m.l}" y="${yz}" width="${iw}" height="${Math.max(m.t+ih-yz,0)}"/></clipPath>`;
+      s+=`<path d="${area}" fill="${C.pos}" opacity=".28" clip-path="url(#${id}u)"/>`;
+      s+=`<path d="${area}" fill="${C.neg}" opacity=".28" clip-path="url(#${id}d)"/>`;
+      s+=`<path d="${d}" fill="none" stroke="${C.pos}" stroke-width="1.6" clip-path="url(#${id}u)"/>`;
+      s+=`<path d="${d}" fill="none" stroke="${C.neg}" stroke-width="1.6" clip-path="url(#${id}d)"/>`;
+    } else {
+      s+=`<path d="${d}" fill="none" stroke="${se.color}" stroke-width="${se.w||1.6}" stroke-linejoin="round"/>`;
+    }
+  });
+  s+=`<line class="cl" id="${id}x" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}"/></svg><div class="tip"></div>`;
+  el.innerHTML=s;
+  hover(el,o,{W,m,iw,t0,t1,X,id});
+}
+
+function hover(el,o,g){
+  const svg=el.querySelector("svg"), tip=el.querySelector(".tip"), cl=el.querySelector("#"+g.id+"x");
+  const show=e=>{
+    const r=svg.getBoundingClientRect(), px=(e.clientX-r.left)/r.width*g.W;
+    if(px<g.m.l||px>g.W-g.m.r){hide();return;}
+    const t=g.t0+(px-g.m.l)/g.iw*(g.t1-g.t0);
+    let rows="",tt=null;
+    o.series.forEach(se=>{
+      if(!se._p||!se._p.length||se.noTip) return;
+      const p=nearest(se._p,t); tt=tt||p[0];
+      if(Math.abs(p[0]-t)>(o.tipGap||30*6e4)) return;
+      const col=se.signed?(p[1]>=0?C.pos:C.neg):se.color;
+      rows+=`<div><i style="background:${col}"></i>${se.name}: <b>${(se.fmt||(v=>v))(p[1])}</b></div>`;
+    });
+    if(!rows){hide();return;}
+    tip.innerHTML=`<div class="t">${fullT(tt)}</div>`+rows;
+    tip.style.display="block";
+    const er=el.getBoundingClientRect(), x=e.clientX-er.left;
+    tip.style.left=Math.min(Math.max(x+12,0),er.width-tip.offsetWidth)+"px";
+    tip.style.top="0px";
+    const cx=g.X(tt); cl.setAttribute("x1",cx); cl.setAttribute("x2",cx); cl.style.opacity=1;
+  };
+  const hide=()=>{tip.style.display="none"; cl.style.opacity=0;};
+  svg.addEventListener("pointermove",show); svg.addEventListener("pointerleave",hide);
+}
+
+/* ============ Data prep ============ */
+function prepWind(rows){
+  let r=rows.filter(x=>x.active); if(!r.length) r=rows;
+  r=r.slice().sort((a,b)=>tms(a.time_tag)-tms(b.time_tag));
+  const mk=k=>r.filter(x=>num(x[k])!==null).map(x=>[tms(x.time_tag),+x[k]]);
+  return {speed:mk("proton_speed"),dens:mk("proton_density"),src:(r[r.length-1]||{}).source};
+}
+function prepMag(rows){
+  let r=rows.filter(x=>x.active); if(!r.length) r=rows;
+  r=r.slice().sort((a,b)=>tms(a.time_tag)-tms(b.time_tag));
+  const mk=k=>r.filter(x=>num(x[k])!==null).map(x=>[tms(x.time_tag),+x[k]]);
+  return {bt:mk("bt"),bz:mk("bz_gsm"),src:(r[r.length-1]||{}).source};
+}
+function bySel(rows,key,val){
+  return rows.filter(x=>x[key]===val&&num(x.flux)!==null).map(x=>[tms(x.time_tag),+x.flux]).sort((a,b)=>a[0]-b[0]);
+}
+
+/* ============ Rendering ============ */
+const last = a => a.length?a[a.length-1]:null;
+const windowed = (pts,t0)=>pts.filter(p=>p[0]>=t0);
+
+function statCell(k,v,unit,note,alert,cat){
+  return `<div class="stat" style="--c:${cat||"var(--text)"}"><div class="k">${k}</div><div class="v">${v}${unit?`<small>${unit}</small>`:""}</div><div class="n" ${alert?`style="color:${alert};font-weight:600"`:""}>${note||""}</div></div>`;
+}
+
+function renderAll(){
+  const now=Date.now(), t1=now, tRange=now-RANGE_H*36e5, tWind=now-Math.min(RANGE_H,24)*36e5;
+  const D=DATA, cells=[];
+
+  // ---- solar wind
+  const card=id=>document.getElementById(id);
+  if(D.wind&&D.mag){
+    const sp=windowed(D.wind.speed,tWind), dn=windowed(D.wind.dens,tWind), bt=windowed(D.mag.bt,tWind), bz=windowed(D.mag.bz,tWind);
+    const ls=last(D.wind.speed), ld=last(D.wind.dens), lb=last(D.mag.bt), lz=last(D.mag.bz);
+    cells.push(statCell("Solar wind speed",ls?ls[1].toFixed(0):"–","km/s",ls?hhmm(ls[0])+" UTC":"",null,CAT.wind));
+    cells.push(statCell("Density",ld?ld[1].toFixed(1):"–","p/cm³",ld?hhmm(ld[0])+" UTC":"",null,CAT.wind));
+    cells.push(statCell("Magnetic field (Bt)",lb?lb[1].toFixed(1):"–","nT",lb?hhmm(lb[0])+" UTC":"",null,CAT.wind));
+    cells.push(statCell("Bz",lz?(lz[1]>0?"+":"")+lz[1].toFixed(1):"–","nT",lz?(lz[1]<0?"Southward":"Northward"):"",lz?(lz[1]<=-5?C.neg:lz[1]>=5?C.pos:null):null,CAT.wind));
+
+    const sy=niceTicks(Math.min(...sp.map(p=>p[1]),300)-20,Math.max(...sp.map(p=>p[1]),500)+20,4);
+    lineChart(card("ch-speed"),{h:130,t:[tWind,t1],y:[sy.y0,sy.y1],ticks:sy.ticks.map(v=>({v,label:v})),label:"Solar wind speed",
+      series:[{name:"Speed",pts:sp,color:C.accent,w:1.8,fmt:v=>v.toFixed(0)+" km/s"}]});
+    const dm=Math.max(...dn.map(p=>p[1]),5), dy=niceTicks(0,dm*1.05,3);
+    lineChart(card("ch-dens"),{h:110,t:[tWind,t1],y:[dy.y0,dy.y1],ticks:dy.ticks.map(v=>({v,label:v})),label:"Solar wind density",
+      series:[{name:"Density",pts:dn,color:C.blue,w:1.6,fmt:v=>v.toFixed(1)+" /cm³"}]});
+    const hi=Math.max(...bt.map(p=>p[1]),...bz.map(p=>p[1]),5), lo=Math.min(...bz.map(p=>p[1]),-5);
+    const my=niceTicks(lo-1,hi+1,4);
+    lineChart(card("ch-mag"),{h:150,t:[tWind,t1],y:[my.y0,my.y1],ticks:my.ticks.map(v=>({v,label:v})),label:"Interplanetary magnetic field",
+      series:[{name:"Bz",pts:bz,signed:true,fmt:v=>(v>0?"+":"")+v.toFixed(1)+" nT"},
+              {name:"Bt",pts:bt,color:"#ffffff",w:1.4,fmt:v=>v.toFixed(1)+" nT"}]});
+    card("m-wind").textContent="Latest "+(ls?hhmm(ls[0]):"–")+" UTC · source: "+(D.wind.src||"NOAA")+(RANGE_H>24?" · 24 h of data available":"");
+  } else {
+    ["ch-speed","ch-dens","ch-mag"].forEach(i=>card(i).innerHTML=`<div class="err">Solar wind data could not be loaded.</div>`);
+  }
+
+  // ---- x-ray
+  if(D.xray){
+    const lg=windowed(D.xray.long,tRange), sh=windowed(D.xray.short,tRange);
+    const ll=last(D.xray.long), peak=windowed(D.xray.long,now-864e5).reduce((m,p)=>p[1]>m[1]?p:m,[0,0]);
+    const col=!ll?null:ll[1]>=1e-4?C.neg:ll[1]>=1e-5?C.accent:ll[1]>=1e-6?C.amber:null;
+    cells.push(statCell("X-ray flux",ll?flareClass(ll[1]):"–","",peak[1]?`24 h peak ${flareClass(peak[1])} at ${hhmm(peak[0])}`:"",col,CAT.flare));
+    const dec=[-9,-8,-7,-6,-5,-4,-3];
+    lineChart(card("ch-xray"),{h:210,t:[tRange,t1],y:[1e-9,1e-3],log:true,label:"GOES X-ray flux",
+      ticks:dec.map(e=>({v:Math.pow(10,e),center:true})),
+      centerLabels:[["A",-8.5],["B",-7.5],["C",-6.5],["M",-5.5],["X",-4.5]].map(a=>({label:a[0],v:Math.pow(10,a[1])})),
+      series:[{name:"0.1–0.8 nm",pts:lg,color:C.accent,w:1.8,fmt:v=>flareClass(v)+" ("+v.toExponential(1)+" W/m²)"},
+              {name:"0.05–0.4 nm",pts:sh,color:C.blue,w:1.2,fmt:v=>v.toExponential(1)+" W/m²"}]});
+    card("m-xray").textContent="Latest "+(ll?hhmm(ll[0]):"–")+" UTC · GOES-"+(D.xray.sat||"primary");
+  } else card("ch-xray").innerHTML=`<div class="err">X-ray data could not be loaded.</div>`;
+
+  // ---- protons
+  if(D.prot){
+    const p10=windowed(D.prot.p10,tRange), p50=windowed(D.prot.p50,tRange), p100=windowed(D.prot.p100,tRange);
+    const l=last(D.prot.p10), lv=l?sLevel(l[1]):0;
+    cells.push(statCell("Protons ≥10 MeV",l?fmtPfu(l[1]):"–","pfu",lv>0?`Radiation storm S${lv}`:"Below S1 threshold (10 pfu)",lv>0?SCALE_COL[lv]:null,CAT.rad));
+    const dec=[-2,-1,0,1,2,3,4,5];
+    lineChart(card("ch-prot"),{h:210,t:[tRange,t1],y:[1e-2,1e5],log:true,label:"GOES integral proton flux",
+      ticks:dec.map(e=>({v:Math.pow(10,e),label:["10⁻²","10⁻¹","1","10","10²","10³","10⁴","10⁵"][e+2]})),
+      hlines:[{v:10,label:"S1",color:SCALE_COL[1]},{v:100,label:"S2",color:SCALE_COL[2]},{v:1e3,label:"S3",color:SCALE_COL[3]},{v:1e4,label:"S4",color:SCALE_COL[4]},{v:1e5,label:"S5",color:SCALE_COL[5]}],
+      series:[{name:"≥10 MeV",pts:p10,color:C.amber,w:1.9,fmt:v=>fmtPfu(v)+" pfu"},
+              {name:"≥50 MeV",pts:p50,color:C.pink,w:1.3,fmt:v=>fmtPfu(v)+" pfu"},
+              {name:"≥100 MeV",pts:p100,color:C.violet,w:1.3,fmt:v=>fmtPfu(v)+" pfu"}]});
+    card("m-prot").textContent="Latest "+(l?hhmm(l[0]):"–")+" UTC · GOES-"+(D.prot.sat||"primary")+" · pfu = particles/(cm² s sr)";
+  } else card("ch-prot").innerHTML=`<div class="err">Proton data could not be loaded.</div>`;
+
+  // ---- Kp
+  if(D.kp) renderKp(now,cells); else card("ch-kp").innerHTML=`<div class="err">Kp data could not be loaded.</div>`;
+
+  // order of the now-strip: X-ray, protons, solar wind speed, density, Bt, Bz, Kp
+  const lbl=RANGE_H===6?"6 hours":RANGE_H===72?"3 days":"24 hours";
+  document.getElementById("tag-xray").textContent="Showing last "+lbl;
+  document.getElementById("tag-prot").textContent="Showing last "+lbl;
+  document.getElementById("tag-wind").textContent=RANGE_H===6?"Showing last 6 hours":"Showing last 24 hours"+(RANGE_H===72?" (all available)":"");
+  document.getElementById("tag-kp").textContent="Last 2 days + 3-day forecast";
+  const order=["X-ray flux","Protons","Solar wind speed","Density","Magnetic field","Bz","Kp"];
+  const rank=h=>{const i=order.findIndex(k=>h.includes('class="k">'+k)); return i<0?99:i;};
+  cells.sort((a,b)=>rank(a)-rank(b));
+  document.getElementById("now").innerHTML=cells.join("");
+}
+
+const KP_BASE=190; let KPH=KP_BASE;   // Kp chart height. balanceColumns() makes it taller so the right-hand column ends level with the left one
+function balanceColumns(){
+  const cols=document.querySelectorAll(".cols > .col"); if(cols.length<2||!DATA.kp) return;
+  if(window.matchMedia("(max-width:860px)").matches){ if(KPH!==KP_BASE){ KPH=KP_BASE; renderKp(Date.now(),[]); } return; }   // one column on small screens
+  const svg=document.querySelector("#ch-kp svg"); if(!svg) return;
+  const L=cols[0].getBoundingClientRect().height, R=cols[1].getBoundingClientRect().height, scale=svg.getBoundingClientRect().width/720;
+  if(!scale||Math.abs(L-R)<10) return;
+  const nk=Math.max(KP_BASE,Math.min(640,Math.round(KPH+(L-R)/scale)));
+  if(nk!==KPH){ KPH=nk; renderKp(Date.now(),[]); }
+}
+function renderKp(now,cells){
+  const el=document.getElementById("ch-kp"), rows=DATA.kp, W=720,H=KPH,m={l:30,r:10,t:8,b:22},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  const t0=now-2*864e5, t1=Math.max(...rows.map(r=>r.t))+3*36e5;
+  const X=t=>m.l+(t-t0)/(t1-t0)*iw, Y=v=>m.t+ih-v/9*ih, bw=(3*36e5)/(t1-t0)*iw-2;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Planetary Kp index, observed and forecast">`;
+  [0,3,5,6,7,8,9].forEach(v=>s+=`<line class="gl" x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" ${v>=5?`style="stroke:#ff5d5d${v===5?"66":"33"};stroke-dasharray:4 4"`:""}/><text x="${m.l-6}" y="${Y(v)+3.5}" text-anchor="end">${v}</text>${v>=5?`<text x="${W-m.r-3}" y="${Y(v)-3}" text-anchor="end" style="fill:#ff8f8f;font-weight:600">G${v-4}</text>`:""}`);
+  for(let t=Math.ceil(t0/864e5)*864e5;t<=t1;t+=864e5) s+=`<line class="gl" x1="${X(t)}" x2="${X(t)}" y1="${m.t}" y2="${m.t+ih}" style="stroke:#33406a"/><text x="${X(t)+4}" y="${H-5}" style="font-weight:700;fill:#c3cce6">${dayLbl(t)}</text>`;
+  const kc=v=>v>=5?C.neg:v>=4?C.amber:C.pos;
+  rows.filter(r=>r.t+3*36e5>=t0).forEach(r=>{
+    const x=Math.max(X(r.t)+1,m.l), h=Math.max(Y(0)-Y(r.kp),1.5), pred=r.obs==="predicted";
+    s+=`<rect x="${x}" y="${Y(r.kp)}" width="${bw}" height="${h}" rx="2" fill="${kc(r.kp)}" fill-opacity="${pred?0.25:0.95}" ${pred?`stroke="${kc(r.kp)}" stroke-dasharray="3 2"`:""}><title>${fullT(r.t)}: Kp ${r.kp.toFixed(1)} (${r.obs})</title></rect>`;
+  });
+  s+=`<line x1="${X(now)}" x2="${X(now)}" y1="${m.t}" y2="${m.t+ih}" stroke="#fff" stroke-dasharray="2 3" opacity=".8"/><text x="${X(now)+4}" y="${m.t+10}" style="fill:#fff;font-weight:600">now</text></svg>`;
+  el.innerHTML=s;
+  const cur=rows.filter(r=>r.obs!=="predicted").pop();
+  const nxt=rows.filter(r=>r.obs==="predicted"&&r.t<now+72*36e5);
+  const mx=nxt.reduce((a,r)=>r.kp>a.kp?r:a,{kp:-1,t:0});
+  cells.splice(4,0,statCell("Kp (latest)",cur?cur.kp.toFixed(1):"–","",mx.kp>=0?`Forecast max ${mx.kp.toFixed(1)}, ${dayLbl(mx.t)}`:"",cur&&cur.kp>=5?C.neg:cur&&cur.kp>=4?C.amber:null,CAT.geo));
+  document.getElementById("m-kp").textContent="Solid bars observed or estimated · dashed bars forecast by NOAA";
+}
+
+function renderScales(){
+  const el=document.getElementById("scales"), s=DATA.scales, panel=document.getElementById("scalepanel");
+  if(!s){el.textContent="NOAA scales unavailable";return;}
+  const lv=k=>Math.min(+(s[k]&&s[k].Scale||0),5);
+  const ch=(k)=>`<b style="color:${SCALE_COL[lv(k)]}">${k}${lv(k)}</b>`;
+  el.innerHTML=`Now: ${ch("R")} ${ch("S")} ${ch("G")} <span aria-hidden="true" style="color:var(--muted)">ⓘ</span>`;
+  const NAMES=["none","minor","moderate","strong","severe","extreme"];
+  const rows=[
+    ["R","Radio blackouts","Caused by solar flares. R1 starts with an M1 flare, and R3 needs an X1 or bigger. It affects high-frequency radio on the sunlit side of Earth."],
+    ["S","Radiation storms","Caused by energetic protons from flares and CMEs. S1 starts when the flux of protons above 10 MeV reaches 10 pfu. It mostly matters for satellites, astronauts and high-latitude flights."],
+    ["G","Geomagnetic storms","Caused by the solar wind disturbing Earth's magnetic field. G1 is Kp 5 and G5 is Kp 9. This is the one that brings aurora further south."]];
+  panel.innerHTML=`<h2>NOAA space weather scales, right now</h2><p class="desc">Each scale runs from 0 (nothing happening) to 5 (extreme). The letter says what kind of event, and the number says how strong it is.</p><div class="srows">`+
+    rows.map(r=>{const v=lv(r[0]);return `<div class="srow" style="--c:${SCALE_COL[v]}"><b>${r[0]}${v}</b><div><strong>${r[1]}: ${NAMES[v]}${v===0?" right now":""}</strong><span>${r[2]}</span></div></div>`;}).join("")+`</div>`;
+}
+(function(){
+  const btn=document.getElementById("scales"), panel=document.getElementById("scalepanel");
+  btn.addEventListener("click",()=>{const open=panel.hidden; panel.hidden=!open; btn.setAttribute("aria-expanded",open);});
+})();
+
+/* ============ Last 24 h summary ============ */
+function renderSummary(){
+  const D=DATA, now=Date.now(), t24=now-864e5, L=[];
+  const COL=CAT;
+  const n=x=>`<span class="num">${x}</span>`;
+  const tl=t=>new Date(t).getUTCDate()===new Date(now).getUTCDate()?'today '+hhmm(t):dayLbl(t)+' '+hhmm(t);
+  const mean=a=>a.reduce((x,p)=>x+p[1],0)/a.length;
+  let g=0,sv=0,r=0,unsettled=false;
+
+  if(D.wind&&D.mag){
+    const sp=windowed(D.wind.speed,t24), bz=windowed(D.mag.bz,t24);
+    if(sp.length>20){
+      const a=sp.filter(p=>p[0]<t24+2*36e5), b=sp.filter(p=>p[0]>now-2*36e5);
+      const mx=Math.max(...sp.map(p=>p[1])), cur=last(sp)[1];
+      let trend="steady";
+      if(a.length>5&&b.length>5){const d=mean(b)-mean(a); trend=d>40?"faster than 24 hours ago":d<-40?"slower than 24 hours ago":"similar to 24 hours ago";}
+      let t=`Now ${n(cur.toFixed(0)+" km/s")}, ${trend}; peaked at ${n(mx.toFixed(0)+" km/s")}.`;
+      if(bz.length){const mb=bz.reduce((m,p)=>p[1]<m[1]?p:m), v=mb[1].toFixed(1).replace('-','−');
+        t+=mb[1]<=-5?` The magnetic field turned southward, down to ${n(v+" nT")} at ${tl(mb[0])} UTC, which makes it easier to disturb Earth's field.`:` Bz stayed fairly weak (lowest ${n(v+" nT")}).`;}
+      if(mx>=500) unsettled=true;
+      L.push(["Solar wind",t,COL.wind]);
+    }
+  }
+  if(D.kp){
+    const obs=D.kp.filter(k=>k.obs!=="predicted"&&k.t+3*36e5>t24), fc=D.kp.filter(k=>k.obs==="predicted"&&k.t<now+72*36e5);
+    if(obs.length){
+      const mo=obs.reduce((m,k)=>k.kp>m.kp?k:m); g=mo.kp>=5?Math.min(Math.floor(mo.kp)-4,5):0; if(mo.kp>=4) unsettled=true;
+      let t=mo.kp>=5?`Kp reached ${n(mo.kp.toFixed(1))} (geomagnetic storm level, ${n("G"+g)}) around ${tl(mo.t)} UTC.`:`Kp peaked at ${n(mo.kp.toFixed(1))}${mo.kp>=4?" (unsettled)":", no storm level reached"}.`;
+      if(fc.length){const mf=fc.reduce((m,k)=>k.kp>m.kp?k:m); t+=` NOAA forecasts up to ${n(mf.kp.toFixed(1))} over the next three days${mf.kp>=5?" (storm level)":""}.`;}
+      L.push(["Geomagnetic",t,COL.geo]);
+    }
+  }
+  if(D.xray){
+    const lg=windowed(D.xray.long,t24);
+    if(lg.length){
+      const pk=lg.reduce((m,p)=>p[1]>m[1]?p:m), f=pk[1];
+      r=f>=2e-3?5:f>=1e-3?4:f>=1e-4?3:f>=5e-5?2:f>=1e-5?1:0;
+      if(f>=1e-6) unsettled=true;
+      L.push(["Flares",f>=1e-6?`Largest flare ${n(flareClass(f))} at ${tl(pk[0])} UTC${r?` (radio blackout level ${n("R"+r)})`:""}.`:`Only B-class or quieter (peak ${n(flareClass(f))}). No C, M or X flares.`,COL.flare]);
+    }
+  }
+  if(D.prot){
+    const p10=windowed(D.prot.p10,t24);
+    if(p10.length){
+      const pk=p10.reduce((m,p)=>p[1]>m[1]?p:m); sv=sLevel(pk[1]);
+      L.push(["Radiation",sv?`Proton flux (≥10 MeV) reached ${n(fmtPfu(pk[1])+" pfu")}, a radiation storm (${n("S"+sv)}).`:`Proton flux stayed at background levels (peak ${n(fmtPfu(pk[1])+" pfu")}, well below the 10 pfu S1 threshold).`,COL.rad]);
+    }
+  }
+  if(D.regions&&D.regions.length){
+    const withA=D.regions.filter(x=>x.area!=null), big=withA.length?withA.reduce((m,x)=>x.area>m.area?x:m):null;
+    L.push(["Active regions",`${n(D.regions.length)} numbered region${D.regions.length===1?"":"s"} on NOAA's list`+(big?`; the largest is ${n("AR"+big.region)} (${n(big.area+" µHem")}${big.mag_class?", magnetic class "+big.mag_class:""}).`:"."),COL.ar]);
+  }
+  const lvl=Math.max(g,sv,r);
+  const el=document.getElementById("sum-lvl");
+  if(!L.length){el.textContent="Summary unavailable";return;}
+  el.innerHTML=(lvl>0?`Storm-level activity<small>Highest NOAA scale in the last 24 h: ${[g&&"G"+g,sv&&"S"+sv,r&&"R"+r].filter(Boolean).join(", ")}</small>`
+                    :unsettled?`Unsettled<small>No NOAA-scale storms in the last 24 h, but some activity</small>`
+                    :`Quiet<small>Nothing above NOAA-scale thresholds in the last 24 h</small>`);
+  el.style.color=lvl>0?SCALE_COL[Math.min(Math.max(lvl,2),5)]:unsettled?C.amber:C.pos;
+  document.getElementById("sum-list").innerHTML=L.map(x=>`<li style="--c:${x[2]}"><b>${x[0]}.</b>${x[1]}</li>`).join("");
+}
+
+/* ============ Fetch + refresh ============ */
+async function get(path){
+  const r=await fetch(CONFIG.base+path,{cache:"no-store"});
+  if(!r.ok) throw new Error(path+" "+r.status);
+  return r.json();
+}
+async function load(){
+  const jobs={
+    wind:   get(EP.wind).then(prepWind),
+    mag:    get(EP.mag).then(prepMag),
+    xray:   get(EP.xray).then(r=>({long:bySel(r,"energy","0.1-0.8nm"),short:bySel(r,"energy","0.05-0.4nm"),sat:(r[r.length-1]||{}).satellite})),
+    prot:   get(EP.prot).then(r=>({p10:bySel(r,"energy",">=10 MeV"),p50:bySel(r,"energy",">=50 MeV"),p100:bySel(r,"energy",">=100 MeV"),sat:(r[r.length-1]||{}).satellite})),
+    kp:     get(EP.kp).then(r=>r.map(x=>({t:tms(x.time_tag),kp:+x.kp,obs:x.observed})).sort((a,b)=>a.t-b.t)),
+    scales: get(EP.scales).then(r=>r["0"]),
+    probs:  get(EP.probs).then(r=>r.reduce((m,x)=>x.date>m.date?x:m,r[0])),
+    regions:get(EP.regions).then(r=>{const d=r.reduce((m,x)=>x.observed_date>m?x.observed_date:m,"");return r.filter(x=>x.observed_date===d);})
+  };
+  const keys=Object.keys(jobs), res=await Promise.allSettled(keys.map(k=>jobs[k]));
+  const next={}; let ok=0;
+  res.forEach((r,i)=>{ if(r.status==="fulfilled"){next[keys[i]]=r.value;ok++;} else console.warn(keys[i],r.reason); });
+  DATA=Object.assign({},DATA,next);   // keep previous data for any feed that failed this time
+  renderScales(); renderAll(); renderSummary(); renderOutlook(); drawOverlay(); setTimeout(balanceColumns,50);
+  const t=document.getElementById("updtxt"), dot=document.querySelector("#upd .dot");
+  t.textContent=ok===keys.length?"Updated "+hhmm(Date.now())+" UTC":(ok?"Partly updated "+hhmm(Date.now())+" UTC":"Can't reach NOAA");
+  dot.style.background=ok===keys.length?C.pos:(ok?C.amber:C.neg);
+}
+
+document.querySelectorAll("button[data-h]").forEach(b=>b.addEventListener("click",()=>{
+  RANGE_H=+b.dataset.h;
+  document.querySelectorAll("button[data-h]").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  renderAll();
+}));
+const img=document.getElementById("connimg");
+img.src=CONFIG.connectivityImage;
+img.addEventListener("error",()=>{img.hidden=true;document.getElementById("connempty").hidden=false;});
+
+/* ============ Sun panel: one view, a 24 h AIA 193 loop, two switchable layers ============ */
+const rad = d => d*Math.PI/180;
+function sunGeom(t, kind){
+  const d=new Date(t), doy=(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-Date.UTC(d.getUTCFullYear(),0,0))/864e5;
+  const au=1-0.01672*Math.cos(rad(360*(doy-3)/365.25));
+  const rArc=959.63/au;
+  const B0=7.25*Math.sin(rad(360*(doy-157)/365.25));
+  return kind==="hv" ? {size:700,cx:350,cy:350,r:rArc/3.4,B0}          // hourly frames from the job
+                     : {size:1024,cx:511.5,cy:511.5,r:rArc/2.4,B0};    // fallback: SDO's own latest image
+}
+// Heliographic position (lon from the central meridian, west positive) -> picture position, rotated by dd days
+function projectPt(lon,lat,dd,g){
+  const phi=rad(lat), sp=Math.sin(phi), B=rad(g.B0);
+  const om=14.713-2.396*sp*sp-1.787*Math.pow(sp,4)-0.9856;             // synodic deg/day
+  const lam=rad(lon+om*dd);
+  const x=Math.cos(phi)*Math.sin(lam), y=Math.sin(phi)*Math.cos(B)-Math.cos(phi)*Math.cos(lam)*Math.sin(B);
+  const z=Math.sin(phi)*Math.sin(B)+Math.cos(phi)*Math.cos(lam)*Math.cos(B);
+  return {px:g.cx+g.r*x,py:g.cy-g.r*y,z};
+}
+// NOAA numbered regions (positions are for 00:00 UTC of their date, rotated forward to time t)
+function projectRegions(regs,t,g){
+  const out=[];
+  (regs||[]).forEach(r=>{
+    const t0=Date.parse(r.observed_date+"T00:00:00Z");
+    const q=projectPt(-r.longitude,r.latitude,(t-t0)/864e5,g);
+    if(q.z>=0.03) out.push({px:q.px,py:q.py,r});
+  });
+  return out;
+}
+const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false};
+const cv=document.getElementById("suncv"), cx2=cv.getContext("2d"), ov=document.getElementById("sunov");
+
+function arOverlay(t,g){
+  const k=g.size/1024*22, pts=projectRegions(DATA.regions,t,g);
+  return pts.map(p=>{
+    const right=p.px>g.cx, lx=p.px+(right?-1:1)*k*0.9, r=p.r;
+    const tip=`AR${r.region} · ${r.location}${r.spot_class?" · "+r.spot_class:""}${r.mag_class?" · "+r.mag_class:""}${r.area!=null?" · "+r.area+" µHem":""}`;
+    return `<g><title>${tip}</title><circle cx="${p.px}" cy="${p.py}" r="${k*0.55}" fill="none" stroke="${C.accent}" stroke-width="${g.size/1024*2.2}"/>`+
+           `<text x="${lx}" y="${p.py+k*0.35}" text-anchor="${right?"end":"start"}" font-size="${k}">${r.region}</text></g>`;
+  }).join("");
+}
+function chOverlay(t,g){
+  const D=SUN.chdata; if(!D||!D.holes) return "";
+  const dd=(t-Date.parse(D.time))/864e5, k=g.size/1024*22;
+  let out="";
+  D.holes.forEach(h=>{
+    const col=h.pol>0?"#ff6b81":h.pol<0?"#5aa9ff":"#ffc94d";
+    const pts=h.lon.map((lo,i)=>projectPt(lo,h.lat[i],dd,g));
+    const runs=[]; let cur=[];
+    pts.forEach(p=>{ if(p.z>0.08) cur.push(p); else { if(cur.length>1) runs.push(cur); cur=[]; } });
+    if(cur.length>1) runs.push(cur);
+    if(!runs.length) return;
+    out+=runs.map(r=>`<path d="${r.map((p,i)=>(i?"L":"M")+p.px.toFixed(1)+" "+p.py.toFixed(1)).join(" ")}" fill="none" stroke="${col}" stroke-width="${g.size/1024*3}" stroke-linejoin="round" stroke-linecap="round"/>`).join("");
+    const big=runs.reduce((m,r)=>r.length>m.length?r:m), mx=big.reduce((a,p)=>a+p.px,0)/big.length, my=big.reduce((a,p)=>a+p.py,0)/big.length;
+    out+=`<text x="${mx}" y="${my+k*0.35}" text-anchor="middle" font-size="${k*0.9}" style="fill:${col}">${h.label}</text>`;
+  });
+  return out;
+}
+function drawOverlay(){
+  if(!SUN.frames.length&&!SUN.fallback){ov.innerHTML="";return;}
+  const kind=SUN.fallback?"aia":"hv", t=SUN.fallback?Date.now():SUN.frames[SUN.idx].t, g=sunGeom(t,kind);
+  ov.setAttribute("viewBox",`0 0 ${g.size} ${g.size}`);
+  ov.innerHTML=(SUN.ch&&!SUN.fallback?chOverlay(t,g):"")+(SUN.ar?arOverlay(t,g):"");
+}
+function setMsg(t){const m=document.getElementById("sunmsg"); m.hidden=!t; m.textContent=t||"";}
+function paint(img){
+  if(cv.width!==img.naturalWidth){cv.width=img.naturalWidth; cv.height=img.naturalHeight;}
+  cx2.drawImage(img,0,0,cv.width,cv.height);
+}
+function loadImg(src){return new Promise((res,rej)=>{const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error("image failed")); im.src=src;});}
+function showFrame(i){
+  SUN.idx=i; const f=SUN.frames[i];
+  if(f.img) paint(f.img);
+  document.getElementById("scrub").value=i;
+  document.getElementById("looptime").textContent=dayLbl(f.t)+" "+hhmm(f.t)+" UTC"+(i===SUN.frames.length-1?" · latest":"");
+  drawOverlay();
+}
+function stepLoop(){
+  if(!SUN.playing) return;
+  const last=SUN.frames.length-1, nxt=SUN.idx>=last?0:SUN.idx+1;
+  showFrame(nxt);
+  SUN.timer=setTimeout(stepLoop, nxt===last?1600:150);                 // pause on the latest frame, then go round again
+}
+function setPlaying(on){
+  SUN.playing=on; clearTimeout(SUN.timer);
+  const b=document.getElementById("playbtn"); b.textContent=on?"❚❚ Pause":"▶ Play last 24 h";
+  if(on){ if(SUN.idx>=SUN.frames.length-1) showFrame(0); SUN.timer=setTimeout(stepLoop,150); }
+}
+async function preloadAll(){
+  // latest frame is already showing; fetch the rest in the background so the loop plays without gaps
+  const jobs=SUN.frames.map(async f=>{ if(!f.img){ try{ f.img=await loadImg(f.url+"?v="+f.t); }catch(e){ f.img=null; } } });
+  await Promise.all(jobs);
+  SUN.frames=SUN.frames.filter(f=>f.img);
+  document.getElementById("scrub").max=Math.max(SUN.frames.length-1,0);
+  SUN.loadedAll=true;
+  document.getElementById("playbtn").disabled=SUN.frames.length<2;
+}
+async function initSun(){
+  const meta=document.getElementById("m-sun");
+  setMsg("Loading the Sun…");
+  let man=null;
+  try{ const r=await fetch(CONFIG.framesUrl+"?t="+Math.floor(Date.now()/3e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status); man=await r.json(); }catch(e){ man=null; }
+  try{ const r=await fetch(CONFIG.chUrl+"?t="+Math.floor(Date.now()/3e5),{cache:"no-store"}); if(r.ok) SUN.chdata=await r.json(); }catch(e){ SUN.chdata=null; }
+  document.getElementById("chbtn").hidden=!SUN.chdata;
+  if(man&&man.frames&&man.frames.length){
+    const wasPlaying=SUN.playing; setPlaying(false);
+    SUN.fallback=false;
+    SUN.frames=man.frames.map(f=>({t:Date.parse(f.t),url:f.f,img:null}));
+    const last=SUN.frames[SUN.frames.length-1];
+    try{ last.img=await loadImg(last.url+"?v="+last.t); }catch(e){}
+    document.getElementById("loopbar").hidden=false;
+    document.getElementById("scrub").max=SUN.frames.length-1; document.getElementById("playbtn").disabled=true;
+    showFrame(SUN.frames.length-1); setMsg("");
+    meta.textContent="Hourly SDO/AIA 193 Å pictures from Helioviewer for the last 24 hours. Dark patches are coronal holes, the source of fast solar wind. Outlines show holes detected in the latest picture (pink = positive magnetic polarity, blue = negative), moved with the Sun's rotation for earlier frames. Orange circles are NOAA numbered active regions.";
+    preloadAll().then(()=>{ if(wasPlaying) setPlaying(true); });
+  } else {
+    // fallback: the job's frames are not there (yet), show SDO's own latest image with the regions only
+    SUN.fallback=true; SUN.frames=[]; document.getElementById("loopbar").hidden=true; document.getElementById("chbtn").hidden=true;
+    try{ const im=await loadImg(CONFIG.sdoLatest+"?t="+Math.floor(Date.now()/3e5)); paint(im); setMsg(""); drawOverlay();
+         meta.textContent="SDO/AIA 193 Å, most recent image. Dark patches are coronal holes. Orange circles are NOAA numbered active regions."; }
+    catch(e){ setMsg("The Sun picture isn't available right now. Please try again in a few minutes."); }
+  }
+}
+function setLayer(btn,key){ SUN[key]=!SUN[key]; btn.setAttribute("aria-pressed",SUN[key]); drawOverlay(); }
+document.getElementById("chbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ch"));
+document.getElementById("arbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ar"));
+document.getElementById("playbtn").addEventListener("click",()=>setPlaying(!SUN.playing));
+document.getElementById("nowbtn").addEventListener("click",()=>{ setPlaying(false); showFrame(SUN.frames.length-1); });
+document.getElementById("scrub").addEventListener("input",e=>{ setPlaying(false); showFrame(+e.target.value); });
+initSun();
+setInterval(()=>{ if(!document.hidden && !SUN.playing) initSun(); }, 30*60*1000);
+
+/* ============ Corona panel: NOAA CCOR-2, hourly frames for the last 24 h ============ */
+const COR={frames:[],idx:0,timer:null,playing:false};
+const ccv=document.getElementById("ccv"), cctx=ccv.getContext("2d");
+function cMsg(t){const m=document.getElementById("cmsg"); m.hidden=!t; m.textContent=t||"";}
+function cPaint(img){ if(ccv.width!==img.naturalWidth){ccv.width=img.naturalWidth; ccv.height=img.naturalHeight;} cctx.drawImage(img,0,0,ccv.width,ccv.height); }
+function cShow(i){
+  COR.idx=i; const f=COR.frames[i];
+  if(f.img) cPaint(f.img);
+  document.getElementById("cscrub").value=i;
+  document.getElementById("ctime").textContent=dayLbl(f.t)+" "+hhmm(f.t)+" UTC"+(i===COR.frames.length-1?" · latest":"");
+}
+function cStep(){
+  if(!COR.playing) return;
+  const last=COR.frames.length-1, nxt=COR.idx>=last?0:COR.idx+1;
+  cShow(nxt); COR.timer=setTimeout(cStep, nxt===last?1600:150);
+}
+function cPlay(on){
+  COR.playing=on; clearTimeout(COR.timer);
+  document.getElementById("cplay").textContent=on?"❚❚ Pause":"▶ Play last 24 h";
+  if(on){ if(COR.idx>=COR.frames.length-1) cShow(0); COR.timer=setTimeout(cStep,150); }
+}
+async function initCorona(){
+  cMsg("Loading the corona…");
+  try{
+    const r=await fetch(CONFIG.coronaDir,{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
+    const names=[...new Set([...(await r.text()).matchAll(/\d{8}_\d{4}_ccor2_1024by960\.jpg/g)].map(m=>m[0]))].sort();
+    if(!names.length) throw new Error("no frames");
+    const all=names.map(n=>{const m=/^(\d{4})(\d\d)(\d\d)_(\d\d)(\d\d)/.exec(n); return {t:Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]),url:CONFIG.coronaDir+n,img:null};});
+    const newest=all[all.length-1], pick=[];
+    for(let k=all.length-1;k>=0;k-=4){ if(newest.t-all[k].t>24*36e5) break; pick.unshift(all[k]); }   // newest, then hourly going back 24 h
+    const was=COR.playing; cPlay(false);
+    COR.frames=pick;
+    const last=pick[pick.length-1];
+    try{ last.img=await loadImg(last.url); }catch(e){}
+    document.getElementById("cbar").hidden=false;
+    document.getElementById("cscrub").max=pick.length-1; document.getElementById("cplay").disabled=true;
+    cShow(pick.length-1); cMsg("");
+    Promise.all(pick.map(async f=>{ if(!f.img){ try{ f.img=await loadImg(f.url); }catch(e){} } })).then(()=>{
+      COR.frames=COR.frames.filter(f=>f.img); document.getElementById("cscrub").max=Math.max(COR.frames.length-1,0);
+      document.getElementById("cplay").disabled=COR.frames.length<2; if(was) cPlay(true);
+    });
+  }catch(e){ cMsg("The coronagraph picture isn't available right now. Please try again in a few minutes."); }
+}
+document.getElementById("cplay").addEventListener("click",()=>cPlay(!COR.playing));
+document.getElementById("cnow").addEventListener("click",()=>{ cPlay(false); cShow(COR.frames.length-1); });
+document.getElementById("cscrub").addEventListener("input",e=>{ cPlay(false); cShow(+e.target.value); });
+initCorona();
+setInterval(()=>{ if(!document.hidden && !COR.playing) initCorona(); }, 30*60*1000);
+
+/* ============ 3-day outlook (NOAA): max Kp, flare chance, proton storm ============ */
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function renderOutlook(){
+  const P=DATA.probs, ex=document.getElementById("o-xray"), op=document.getElementById("o-prot");
+  if(!ex||!op) return;
+  if(!P){ ex.textContent=""; op.textContent=""; return; }
+  const base=Date.parse(P.date+(/Z$/.test(P.date)?"":"Z")), days=[0,1,2].map(i=>DAY[new Date(base+i*864e5).getUTCDay()]);
+  const vals=k=>[1,2,3].map(i=>P[k+i+"_day"]);
+  const line=(arr,col)=>arr.every(v=>v===arr[0])?`<b style="color:${col}">${arr[0]}%</b> each day`:arr.map((v,i)=>`${days[i]} <b style="color:${col}">${v}%</b>`).join(", ");
+  ex.innerHTML=`Chance of an M-class flare: ${line(vals("m_class_"),C.accent)}. X-class: ${line(vals("x_class_"),C.neg)}. <span style="opacity:.7">NOAA's 3-day forecast.</span>`;
+  op.innerHTML=`Chance of an S1 or greater radiation storm: ${line(vals("10mev_protons_"),C.blue)}. <span style="opacity:.7">NOAA's 3-day forecast.</span>`;
+}
+
+/* ============ Aurora oval + Met Office outlook ============ */
+const AUR={frames:[],idx:0,timer:null,playing:false,nowIdx:0,loaded:false,started:false};
+const acv=document.getElementById("acv"), actx=acv.getContext("2d"), aov=document.getElementById("aov");
+function aMsg(t){const m=document.getElementById("amsg"); m.hidden=!t; m.textContent=t||"";}
+function aPaint(img){ if(acv.width!==img.naturalWidth){acv.width=img.naturalWidth; acv.height=img.naturalHeight;} actx.drawImage(img,0,0,acv.width,acv.height); }
+function aUK(){
+  // the map is a polar view with 0° longitude at the bottom; the disc was measured at centre (0.5122, 0.5048) and radius 0.3843 of the width
+  const W=acv.width, H=acv.height, cx=0.5122*W, cy=0.5048*H, R=0.3843*W, la=rad(54.5), lo=rad(-3);
+  const x=cx+R*Math.cos(la)*Math.sin(lo), y=cy+R*Math.cos(la)*Math.cos(lo);
+  aov.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  aov.innerHTML=`<circle cx="${x}" cy="${y}" r="${W*0.016}" fill="none" stroke="#ff3df2" stroke-width="${W*0.0035}"/><text x="${x+W*0.026}" y="${y+W*0.009}" font-size="${W*0.03}">UK</text>`;
+}
+function aShow(i){
+  AUR.idx=i; const f=AUR.frames[i];
+  if(f.img) aPaint(f.img);
+  document.getElementById("ascrub").value=i;
+  document.getElementById("atime").textContent=dayLbl(f.t)+" "+hhmm(f.t)+" UTC"+(i===AUR.nowIdx?" · now":"");
+  aUK();
+}
+function aStep(){
+  if(!AUR.playing) return;
+  const last=AUR.frames.length-1, nxt=AUR.idx>=last?0:AUR.idx+1;
+  aShow(nxt); AUR.timer=setTimeout(aStep, nxt===last?1800:260);
+}
+function aPlay(on){
+  AUR.playing=on; clearTimeout(AUR.timer);
+  document.getElementById("aplay").textContent=on?"❚❚ Pause":"▶ Play 4 days";
+  if(on){ ensureAurFrames().then(()=>{ if(AUR.playing){ if(AUR.idx>=AUR.frames.length-1) aShow(0); AUR.timer=setTimeout(aStep,200);} }); }
+}
+async function ensureAurFrames(){
+  if(AUR.loaded) return;
+  await Promise.all(AUR.frames.map(async f=>{ if(!f.img){ try{ f.img=await loadImg(f.url+"?v="+AUR.stamp); }catch(e){} } }));
+  AUR.loaded=true;
+}
+function shortMet(t){
+  const sent=(t||"").replace(/\s+/g," ").match(/[^.!?]+[.!?]+/g)||[];
+  let out=sent.slice(0,2).join(" ").trim();
+  if(out.length>340) out=(sent[0]||"").trim();                       // keep it to a sentence or two
+  return out;
+}
+async function initAurora(){
+  const line=document.getElementById("metline");
+  aMsg("Loading the aurora forecast…");
+  try{
+    const r=await fetch(CONFIG.auroraUrl+"?t="+Math.floor(Date.now()/6e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
+    const d=await r.json(); if(!d.frames||!d.frames.length) throw new Error("no frames");
+    AUR.stamp=d.fetched||"";
+    const was=AUR.playing; aPlay(false);
+    AUR.frames=d.frames.map(f=>({t:Date.parse(f.t),url:f.f,img:null})); AUR.loaded=false;
+    const now=Date.now(); let best=0; AUR.frames.forEach((f,i)=>{ if(Math.abs(f.t-now)<Math.abs(AUR.frames[best].t-now)) best=i; }); AUR.nowIdx=best;
+    try{ AUR.frames[best].img=await loadImg(AUR.frames[best].url+"?v="+AUR.stamp); }catch(e){}
+    document.getElementById("abar").hidden=false;
+    document.getElementById("ascrub").max=AUR.frames.length-1;
+    aShow(best); aMsg("");
+    // fetch the other frames once the panel is near the screen (they are about 80 KB each)
+    if("IntersectionObserver" in window){ const io=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)){ io.disconnect(); ensureAurFrames(); } },{rootMargin:"400px"}); io.observe(document.getElementById("c-aurora")); }
+    else ensureAurFrames();
+    if(was) aPlay(true);
+    const txt=shortMet(d.aurora_text);
+    if(txt){ line.innerHTML=`<b style="color:#8bd450">Met Office:</b> ${txt}${d.aurora_issued?`<small>Issued ${d.aurora_issued}</small>`:""}`; line.hidden=false; } else line.hidden=true;
+  }catch(e){
+    aMsg("The aurora forecast map isn't available right now.");
+    line.hidden=true;
+  }
+}
+document.getElementById("aplay").addEventListener("click",()=>aPlay(!AUR.playing));
+document.getElementById("anow").addEventListener("click",()=>{ aPlay(false); aShow(AUR.nowIdx); });
+document.getElementById("ascrub").addEventListener("input",e=>{ aPlay(false); ensureAurFrames().then(()=>aShow(+e.target.value)); aShow(+e.target.value); });
+initAurora();
+setInterval(()=>{ if(!document.hidden && !AUR.playing) initAurora(); }, 30*60*1000);
+/* keep the two columns level when pictures load or the window changes */
+(function(){
+  let t=null; const go=()=>{ clearTimeout(t); t=setTimeout(balanceColumns,120); };
+  window.addEventListener("load",go); window.addEventListener("resize",go);
+  const left=document.querySelector(".cols > .col"); if(left && "ResizeObserver" in window) new ResizeObserver(go).observe(left);
+  document.querySelectorAll(".conn img").forEach(im=>im.addEventListener("load",go));
+})();
+
+
+
+/* When embedded in an iframe (e.g. on WordPress), tell the parent page how tall the dashboard is so it can resize without scrollbars */
+(function(){
+  if(window.parent===window) return;
+  const send=()=>{ try{ window.parent.postMessage({swDashHeight:document.documentElement.scrollHeight},"*"); }catch(e){} };
+  if("ResizeObserver" in window) new ResizeObserver(send).observe(document.body);
+  window.addEventListener("load",send); window.addEventListener("resize",send); setTimeout(send,1500);
+})();
+
+load();
+setInterval(()=>{ if(!document.hidden) load(); }, CONFIG.refreshSeconds*1000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) load(); });
+</script>
+</body>
+</html>
