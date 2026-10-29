@@ -372,7 +372,7 @@ footer a:hover{text-decoration:underline}
       <details style="--c:#ffc94d"><summary>Proton flux and radiation storms</summary>
         <p>Protons accelerated by flares and CMEs can reach Earth within minutes to hours. A radiation storm (S1 or above) begins when the flux of protons above 10 MeV reaches 10 pfu (particles per cm² per second per steradian). S2 is 100, S3 is 1,000, S4 is 10,000 and S5 is 100,000. These mostly matter for satellites, astronauts and high-latitude flights, rather than for people on the ground. The S-level only looks at protons above 10 MeV. Studies of ground-level enhancements describe how hard the spectrum is with a spectral index: the slope of a power law, J(E) ∝ E<sup>−γ</sup>, fitted to the differential proton flux in the channels above about 40 MeV. A smaller γ means a harder spectrum, which can matter more for aircraft and ground-level effects than the S-level alone suggests. The value changes through an event, and is usually flattest early on. The words hard, typical and soft are a rough guide and not an agreed standard. They split at the midpoints between published averages: ground-level events average a slope of about 3.2 above 40 MeV, while event-integrated 10–100 MeV studies give about 2.7 for GLEs, 3.8 for regular large SEP events and 4.9 for filament-eruption events. So below 3.2 is called hard, and above 4.4 soft. The fit uses only channels that are clearly above their quiet-time level, so it is shown only during a significant event. NOAA issues its own alert when the ≥100 MeV flux reaches 1 pfu.</p></details>
       <details style="--c:#5aa9ff"><summary>Active regions</summary>
-        <p>Active regions are the Sun's sunspot groups. NOAA gives each a number (for example AR4560) and a magnetic class. Simple groups (alpha, beta) rarely produce big flares, while more complex classes (beta-gamma, delta) are more likely to. Where a region sits on the disc also matters. Flares and CMEs from regions near the centre are more likely to be aimed at Earth.</p></details>
+        <p>Active regions are the Sun's sunspot groups. NOAA gives each a number (for example AR4560) and, for groups with sunspots, a magnetic class based on how the magnetic polarities are arranged. α (alpha) is a single dominant polarity, β (beta) is a simple pair of opposite polarities, γ (gamma) is a tangled mix with no clear dividing line, and δ (delta) has opposite polarities packed inside one sunspot. Combined names such as β-γ or β-γ-δ are more complex. Simple groups (α, β) rarely produce big flares, while the more complex classes are more likely to, although most regions never produce a large flare. Regions with no spots, only bright plage, have no class. Where a region sits on the disc also matters. Flares and CMEs from regions near the centre are more likely to be aimed at Earth.</p></details>
       <details style="--c:#ff9a2e"><summary>The magnetogram</summary>
         <p>A magnetogram maps the Sun's magnetic field along our line of sight, measured by the HMI instrument on NASA's Solar Dynamics Observatory. White is field pointing towards us (positive) and black is field pointing away (negative), with grey where the field is weak. Active regions show up as close pairs of white and black patches. Coronal holes are regions where the field mostly points one way, which is why the outlines on the pictures are coloured pink for positive and blue for negative. The data used here arrive about an hour after they are measured.</p></details>
       <details style="--c:#ff9a2e"><summary>Coronal holes</summary>
@@ -777,7 +777,7 @@ function renderSummary(){
   if(D.regions){
     const vis=projectRegions(D.regions,now,sunGeom(now,"hv")).map(p=>p.r);
     const withA=vis.filter(x=>x.area!=null), big=withA.length?withA.reduce((m,x)=>x.area>m.area?x:m):null;
-    L.push(["Active regions",vis.length?`${n(vis.length)} numbered region${vis.length===1?"":"s"} on the visible disc`+(big?`; the largest is ${n("AR"+big.region)} (${n(big.area+" µHem")}${big.mag_class?", magnetic class "+big.mag_class:""}).`:". None has sunspots large enough to measure."):"No numbered regions on the visible disc.",COL.ar]);
+    L.push(["Active regions",vis.length?`${n(vis.length)} numbered region${vis.length===1?"":"s"} on the visible disc`+(big?`; the largest is ${n("AR"+big.region)} (${n(big.area+" µHem")}${big.mag_class?", magnetic class "+hale(big.mag_class)+" ("+haleName(big.mag_class)+")":""}).`:". None has sunspots large enough to measure."):"No numbered regions on the visible disc.",COL.ar]);
   }
   const lvl=Math.max(g,sv,r);
   const el=document.getElementById("sum-lvl");
@@ -861,13 +861,16 @@ function projectRegions(regs,t,g){
 const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false,mode:"aia",aia:[],hmiSet:null,hmiOk:false};
 const cv=document.getElementById("suncv"), cx2=cv.getContext("2d"), ov=document.getElementById("sunov");
 
+const HALE={A:["α","alpha"],B:["β","beta"],G:["γ","gamma"],D:["δ","delta"]};
+const hale=m=>m?[...m].map(c=>(HALE[c]||[c])[0]).join("-"):"";
+const haleName=m=>m?[...m].map(c=>(HALE[c]||[null,c])[1]).join("-"):"";
 function arOverlay(t,g){
   const k=g.size/1024*22, pts=projectRegions(DATA.regions,t,g);
   return pts.map(p=>{
     const right=p.px>g.cx, lx=p.px+(right?-1:1)*k*0.9, r=p.r;
-    const tip=`AR${r.region} · ${r.location}${r.spot_class?" · "+r.spot_class:""}${r.mag_class?" · "+r.mag_class:""}${r.area!=null?" · "+r.area+" µHem":""}`;
+    const tip=`AR${r.region} · ${r.location}${r.spot_class?" · "+r.spot_class:""}${r.mag_class?" · "+hale(r.mag_class)+" ("+haleName(r.mag_class)+")":""}${r.area!=null?" · "+r.area+" µHem":""}`;
     return `<g><title>${tip}</title><circle cx="${p.px}" cy="${p.py}" r="${k*0.55}" fill="none" stroke="${C.accent}" stroke-width="${g.size/1024*2.2}"/>`+
-           `<text x="${lx}" y="${p.py+k*0.35}" text-anchor="${right?"end":"start"}" font-size="${k}">${r.region}</text></g>`;
+           `<text x="${lx}" y="${p.py+k*0.35}" text-anchor="${right?"end":"start"}" font-size="${k}">${r.region}${r.mag_class?" "+hale(r.mag_class):""}</text></g>`;
   }).join("");
 }
 function chOverlay(t,g){
@@ -943,7 +946,7 @@ async function initSun(){
     document.getElementById("loopbar").hidden=false;
     document.getElementById("scrub").max=SUN.frames.length-1; document.getElementById("playbtn").disabled=true;
     showFrame(SUN.frames.length-1); setMsg("");
-    meta.textContent="Hourly SDO/AIA 193 Å pictures from Helioviewer for the last 24 hours. Dark patches are coronal holes, the source of fast solar wind. Outlines show holes detected in the latest picture (pink = positive magnetic polarity, blue = negative), moved with the Sun's rotation for earlier frames. Orange circles are NOAA numbered active regions.";
+    meta.textContent="Hourly SDO/AIA 193 Å pictures from Helioviewer for the last 24 hours. Dark patches are coronal holes, the source of fast solar wind. Outlines show holes detected in the latest picture (pink = positive magnetic polarity, blue = negative), moved with the Sun's rotation for earlier frames. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one.";
     SUN.metaAia=meta.textContent;
     preloadAll().then(()=>{ if(wasPlaying) setPlaying(true); });
     checkHmi().then(()=>{ if(keepMode==="hmi"&&SUN.hmiOk) switchInst("hmi"); });
@@ -951,7 +954,7 @@ async function initSun(){
     // fallback: the job's frames are not there (yet), show SDO's own latest image with the regions only
     SUN.fallback=true; SUN.frames=[]; document.getElementById("loopbar").hidden=true; document.getElementById("chbtn").hidden=true;
     try{ const im=await loadImg(CONFIG.sdoLatest+"?t="+Math.floor(Date.now()/3e5)); paint(im); setMsg(""); drawOverlay();
-         meta.textContent="SDO/AIA 193 Å, most recent image. Dark patches are coronal holes. Orange circles are NOAA numbered active regions."; }
+         meta.textContent="SDO/AIA 193 Å, most recent image. Dark patches are coronal holes. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one."; }
     catch(e){ setMsg("The Sun picture isn't available right now. Please try again in a few minutes."); }
   }
 }
