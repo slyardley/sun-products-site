@@ -142,9 +142,11 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .sunhead h2{white-space:nowrap}
 .seg .short{display:none}
 @media (max-width:480px){.seg .long{display:none}.seg .short{display:inline}.seg button{padding:4px 9px}}
+.stage #openov{pointer-events:none;image-rendering:auto}
 .chips{position:absolute;left:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:3;max-width:calc(100% - 20px)}
 .chips .pill{padding:3px 10px;font-size:11.5px;background:rgba(8,12,24,.74);border-color:rgba(255,255,255,.16)}
 .chips .pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1a1205}
+@media (max-width:480px){.chips{left:6px;bottom:6px;gap:4px;max-width:calc(100% - 12px)}.chips .pill{padding:2px 7px;font-size:10.5px}}
 .tabs{display:flex;flex-wrap:wrap;gap:6px}
 .tabs .pill{padding:5px 11px}
 .stage{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:1/1}
@@ -245,12 +247,14 @@ footer a:hover{text-decoration:underline}
       </div>
       <div class="stage" id="stage">
         <canvas id="suncv" width="700" height="700" role="img" aria-label="Sun in extreme ultraviolet light (AIA 193 Å)"></canvas>
+        <canvas id="openov" width="350" height="350" aria-hidden="true"></canvas>
         <svg id="sunov" viewBox="0 0 700 700" aria-hidden="true"></svg>
         <div class="msg" id="sunmsg" hidden></div>
         <div class="chips" role="group" aria-label="Layers">
           <button class="pill" id="chbtn" aria-pressed="true" title="Show coronal hole outlines">Coronal holes</button>
           <button class="pill" id="arbtn" aria-pressed="true" title="Show NOAA numbered active regions">Active regions</button>
           <button class="pill" id="pfssbtn" aria-pressed="false" title="Show magnetic field lines from a potential-field (PFSS) model" hidden>Field lines</button>
+          <button class="pill" id="ofbtn" aria-pressed="false" title="Shade the areas where the model's magnetic field is open to the solar wind" hidden>Open field</button>
         </div>
       </div>
       <div class="bar" id="loopbar" hidden>
@@ -382,8 +386,10 @@ footer a:hover{text-decoration:underline}
         <p>Protons accelerated by flares and CMEs can reach Earth within minutes to hours. A radiation storm (S1 or above) begins when the flux of protons above 10 MeV reaches 10 pfu (particles per cm² per second per steradian). S2 is 100, S3 is 1,000, S4 is 10,000 and S5 is 100,000. These mostly matter for satellites, astronauts and high-latitude flights, rather than for people on the ground. The S-level only looks at protons above 10 MeV. Studies of ground-level enhancements describe how hard the spectrum is with a spectral index: the slope of a power law, J(E) ∝ E<sup>−γ</sup>, fitted to the differential proton flux in the channels above about 40 MeV. A smaller γ means a harder spectrum, which can matter more for aircraft and ground-level effects than the S-level alone suggests. The value changes through an event, and is usually flattest early on. The words hard, typical and soft are a rough guide and not an agreed standard. They split at the midpoints between published averages: ground-level events average a slope of about 3.2 above 40 MeV, while event-integrated 10–100 MeV studies give about 2.7 for GLEs, 3.8 for regular large SEP events and 4.9 for filament-eruption events. So below 3.2 is called hard, and above 4.4 soft. The fit uses only channels that are clearly above their quiet-time level, so it is shown only during a significant event. NOAA issues its own alert when the ≥100 MeV flux reaches 1 pfu.</p></details>
       <details style="--c:#5aa9ff"><summary>Active regions</summary>
         <p>Active regions are the Sun's sunspot groups. NOAA gives each a number (for example AR4560) and, for groups with sunspots, a magnetic class based on how the magnetic polarities are arranged. α (alpha) is a single dominant polarity, β (beta) is a simple pair of opposite polarities, γ (gamma) is a tangled mix with no clear dividing line, and δ (delta) has opposite polarities packed inside one sunspot. Combined names such as β-γ or β-γ-δ are more complex. Simple groups (α, β) rarely produce big flares, while the more complex classes are more likely to, although most regions never produce a large flare. Regions with no spots, only bright plage, have no class. Where a region sits on the disc also matters. Flares and CMEs from regions near the centre are more likely to be aimed at Earth.</p></details>
+      <details style="--c:#ff6b81"><summary>Open field shading</summary>
+        <p>The Open field button shades the parts of the Sun's surface where the model's magnetic field lines reach the outer boundary instead of looping back down. That open field is what the solar wind flows out along, so these areas are the model's version of coronal holes. Pink is field pointing away from the Sun and blue is field pointing towards it. They are not expected to match the dark patches in the pictures exactly, because the model is simplified and is built from a map that is not perfectly up to date, so treat any difference as a sign of the model's limits.</p></details>
       <details style="--c:#5aa9ff"><summary>Field lines (PFSS model)</summary>
-        <p>The Field lines button draws a computer model of the Sun's magnetic field over the picture. It is a potential field source surface (PFSS) model, built from the latest HMI magnetic map. It assumes there are no electric currents between the surface and an outer boundary at 2.5 solar radii, which makes it a simplified picture and not a measurement. White lines leave the Sun and come back down, so they are closed loops. Pink and blue lines reach the outer boundary and are open, so they carry the solar wind outwards, pink where the field points away from the Sun and blue where it points towards it. Open lines gather above coronal holes. The lines turn with the Sun, but the model is only rebuilt when a new map is made, so it can miss changes such as new regions.</p></details>
+        <p>The Field lines button draws a computer model of the Sun's magnetic field over the picture. It is a potential field source surface (PFSS) model, built from the latest HMI magnetic map. It assumes there are no electric currents between the surface and an outer boundary at 2.5 solar radii, which makes it a simplified picture and not a measurement. White lines leave the Sun and come back down, so they are closed loops. Pink and blue lines reach the outer boundary and are open, so they carry the solar wind outwards, pink where the field points away from the Sun and blue where it points towards it, and only their roots are drawn. Open lines gather above coronal holes. The lines turn with the Sun, but the model is only rebuilt when a new map is made, so it can miss changes such as new regions.</p></details>
       <details style="--c:#ff9a2e"><summary>193, 304 and 131 Å: the different views of the Sun</summary>
         <p>The Sun's atmosphere gives off light at different wavelengths depending on its temperature. The 193 Å view shows the corona at about a million degrees, where coronal holes look dark, and it is the one used for the outlines. The 304 Å view shows cooler gas in the chromosphere, so filaments appear as dark threads and prominences as bright loops, and an erupting filament can launch a CME. The 131 Å view picks out very hot plasma, so flares appear as brilliant patches, but it looks grainy on quiet days. Use the buttons at the top of the Sun panel to switch between them and the magnetogram.</p></details>
       <details style="--c:#ff9a2e"><summary>The magnetogram</summary>
@@ -873,7 +879,7 @@ function projectRegions(regs,t,g){
   });
   return out;
 }
-const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false,mode:"aia",aia:[],sets:{},man:{},pf:false,pfss:null};
+const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false,mode:"aia",aia:[],sets:{},man:{},pf:false,of:false,pfss:null};
 const cv=document.getElementById("suncv"), cx2=cv.getContext("2d"), ov=document.getElementById("sunov");
 
 const HALE={A:["α","alpha"],B:["β","beta"],G:["γ","gamma"],D:["δ","delta"]};
@@ -888,6 +894,36 @@ function arOverlay(t,g){
            `<text x="${lx}" y="${p.py+k*0.35}" text-anchor="${right?"end":"start"}" font-size="${k}">${r.region}${r.mag_class?" "+hale(r.mag_class):""}</text></g>`;
   }).join("");
 }
+/* Open-field shading: a 2-degree map (0 closed, 1 open outward, 2 open inward) in Stonyhurst longitude at the map time, rotated rigidly with the Sun
+   and painted per pixel onto a small canvas under the overlays */
+const OFN=350, ofc=document.getElementById("openov"), ofx=ofc.getContext("2d");
+function drawOpen(t,g){
+  ofx.clearRect(0,0,OFN,OFN);
+  const D=SUN.pfss; if(!SUN.of||!D||!D.open||!D.open.rows||SUN.fallback) return;
+  const O=D.open, st=O.step, nl=Math.round(360/st), nr=O.rows.length;
+  if(!O.mask) O.mask=O.rows.map(r=>Uint8Array.from(r,c=>+c));
+  const dd=(t-Date.parse(D.t))/864e5, shift=13.2*dd, B=rad(g.B0), cB=Math.cos(B), sB=Math.sin(B), rpx=g.r*OFN/g.size, half=OFN/2;
+  const img=ofx.createImageData(OFN,OFN), px=img.data;
+  const get=(x,y,cls)=>{ x=((x%nl)+nl)%nl; y=y<0?0:y>=nr?nr-1:y; return O.mask[y][x]===cls?1:0; };
+  const samp=(lon,lat,cls)=>{
+    const fx=(lon+180)/st-0.5, fy=(lat+90)/st-0.5, x0=Math.floor(fx), y0=Math.floor(fy), ax=fx-x0, ay=fy-y0;
+    return (get(x0,y0,cls)*(1-ax)+get(x0+1,y0,cls)*ax)*(1-ay)+(get(x0,y0+1,cls)*(1-ax)+get(x0+1,y0+1,cls)*ax)*ay;
+  };
+  for(let j=0;j<OFN;j++){
+    const Y=(half-(j+0.5))/rpx;
+    for(let i=0;i<OFN;i++){
+      const X=(i+0.5-half)/rpx, r2=X*X+Y*Y; if(r2>0.985) continue;
+      const Z=Math.sqrt(1-r2), phi=Math.asin(Y*cB+Z*sB), lam=Math.atan2(X,Z*cB-Y*sB);
+      let lon=lam*57.29578-shift; lon=((lon+180)%360+360)%360-180;
+      const lat=phi*57.29578, wp=samp(lon,lat,1), wn=samp(lon,lat,2), w=wp>wn?wp:wn; if(w<0.3) continue;
+      const k=(j*OFN+i)*4;
+      if(wp>=wn){ px[k]=255; px[k+1]=107; px[k+2]=129; } else { px[k]=90; px[k+1]=169; px[k+2]=255; }
+      px[k+3]=Math.round(Math.min(1,(w-0.3)/0.4)*0.45*255);
+    }
+  }
+  ofx.putImageData(img,0,0);
+}
+const legendOpen=g=>`<text x="${g.size-10*g.size/1024}" y="${24*g.size/1024}" text-anchor="end" font-size="${g.size/1024*17}">PFSS model · shaded: open field, pink outward, blue inward</text>`;
 /* PFSS field lines: stored by the job as Stonyhurst longitude (west positive), latitude and radius at the map time; rotated rigidly with the Sun */
 function pfssOverlay(t,g){
   const D=SUN.pfss; if(!D||!D.lines) return "";
@@ -919,15 +955,15 @@ function pfssOverlay(t,g){
          st("#000000",0.30,w*2.8,paths["0"])+st("#e9f0ff",0.62,w*1.3,paths["0"])+                                   // closed loops: pale line over a faint dark edge
          st("#000000",0.35,w*4.4,paths["1"]+paths["-1"])+st("#ff6b81",1,w*2.4,paths["1"])+st("#5aa9ff",1,w*2.4,paths["-1"])+   // open lines
          `</g>`+
-         `<text x="${g.size-10*w}" y="${g.size-14*w}" text-anchor="end" font-size="${w*17}">PFSS model · white closed · pink/blue open</text>`;
+         `<text x="${g.size-10*w}" y="${24*w}" text-anchor="end" font-size="${w*17}">PFSS model · white closed · pink/blue open</text>`;
 }
 async function checkPfss(){
   const btn=document.getElementById("pfssbtn");
   try{
     const r=await fetch(CONFIG.pfssUrl+"?t="+Math.floor(Date.now()/18e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
     const d=await r.json(); if(!d.lines||!d.lines.length) throw new Error("no lines");
-    SUN.pfss=d; btn.hidden=false; if(SUN.pf) drawOverlay();
-  }catch(e){ SUN.pfss=null; btn.hidden=true; if(SUN.pf){ SUN.pf=false; btn.setAttribute("aria-pressed","false"); drawOverlay(); } }
+    SUN.pfss=d; btn.hidden=false; document.getElementById("ofbtn").hidden=!(d.open&&d.open.rows); if(SUN.pf||SUN.of) drawOverlay();
+  }catch(e){ SUN.pfss=null; btn.hidden=true; document.getElementById("ofbtn").hidden=true; if(SUN.pf||SUN.of){ SUN.pf=false; SUN.of=false; btn.setAttribute("aria-pressed","false"); document.getElementById("ofbtn").setAttribute("aria-pressed","false"); drawOverlay(); } }
 }
 function chOverlay(t,g){
   const D=SUN.chdata; if(!D||!D.holes) return "";
@@ -947,10 +983,11 @@ function chOverlay(t,g){
   return out;
 }
 function drawOverlay(){
-  if(!SUN.frames.length&&!SUN.fallback){ov.innerHTML="";return;}
+  if(!SUN.frames.length&&!SUN.fallback){ov.innerHTML="";ofx.clearRect(0,0,OFN,OFN);return;}
   const kind=SUN.fallback?"aia":"hv", t=SUN.fallback?Date.now():SUN.frames[SUN.idx].t, g=sunGeom(t,kind);
   ov.setAttribute("viewBox",`0 0 ${g.size} ${g.size}`);
-  ov.innerHTML=(SUN.pf&&!SUN.fallback?pfssOverlay(t,g):"")+(SUN.ch&&!SUN.fallback&&(SUN.mode==="aia"||SUN.mode==="hmi")?chOverlay(t,g):"")+(SUN.ar?arOverlay(t,g):"");
+  drawOpen(t,g);
+  ov.innerHTML=(SUN.pf&&!SUN.fallback?pfssOverlay(t,g):"")+(SUN.of&&!SUN.pf&&SUN.pfss&&SUN.pfss.open&&!SUN.fallback?legendOpen(g):"")+(SUN.ch&&!SUN.fallback&&SUN.mode==="aia"?chOverlay(t,g):"")+(SUN.ar?arOverlay(t,g):"");
 }
 function setMsg(t){const m=document.getElementById("sunmsg"); m.hidden=!t; m.textContent=t||"";}
 function paint(img){
@@ -1019,7 +1056,7 @@ async function initSun(){
 const VIEWS={
   a304:{url:"aia304Url",tag:"SDO/AIA 304 Å",text:"SDO/AIA 304 Å, one picture per hour for the last 24 hours. This channel shows helium in the Sun's chromosphere and the layer just above it, at roughly 50,000 degrees. Filaments, which are clouds of cooler gas held up by magnetic fields, appear as dark threads on the disc, and prominences as bright loops over the edge. When a filament erupts it can launch a coronal mass ejection (CME). Coronal hole outlines are not shown here, because holes are best seen in 193 Å. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one."},
   a131:{url:"aia131Url",tag:"SDO/AIA 131 Å",text:"SDO/AIA 131 Å, one picture per hour for the last 24 hours. This channel picks out very hot plasma, around 10 million degrees, which is why flares show up as brilliant patches, and it also shows cooler plasma at about 400,000 degrees. On quiet days it looks grainy, and it is most useful while a flare is happening. Coronal hole outlines are not shown here, because holes are best seen in 193 Å. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one."},
-  hmi:{url:"hmiUrl",tag:"SDO/HMI magnetogram",text:"SDO/HMI line-of-sight magnetogram, one picture every two hours for the last 24 hours. White is magnetic field pointing towards us (positive), black is field pointing away (negative), grey is weak field. This near-real-time data arrives about an hour behind the AIA pictures, so the latest time is earlier. The field along the line of sight is less reliable near the edge of the disc. Outlines and circles are as for AIA."}
+  hmi:{url:"hmiUrl",tag:"SDO/HMI magnetogram",text:"SDO/HMI line-of-sight magnetogram, one picture every two hours for the last 24 hours. White is magnetic field pointing towards us (positive), black is field pointing away (negative), grey is weak field. This near-real-time data arrives about an hour behind the AIA pictures, so the latest time is earlier. The field along the line of sight is less reliable near the edge of the disc. Coronal hole outlines are only shown on the 193 Å view, where holes can be seen, so use Open field here to see where the model's field is open to the solar wind. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one."}
 };
 async function checkViews(){
   const grp=document.getElementById("instgrp"); let any=false;
@@ -1056,7 +1093,7 @@ async function switchInst(mode){
   SUN.mode=mode; setPressed(mode);
   document.getElementById("tag-sun").textContent=mode==="aia"?"SDO/AIA 193 Å":VIEWS[mode].tag;
   meta.textContent=mode==="aia"?(SUN.metaAia||""):VIEWS[mode].text;
-  document.getElementById("chbtn").hidden=!(SUN.chdata&&(mode==="aia"||mode==="hmi"));
+  document.getElementById("chbtn").hidden=!(SUN.chdata&&mode==="aia");
   document.getElementById("scrub").max=SUN.frames.length-1; document.getElementById("playbtn").disabled=true;
   showFrame(nearestIdx(SUN.frames,t));
   const keep=mode;
@@ -1071,6 +1108,7 @@ async function switchInst(mode){
 function setLayer(btn,key){ SUN[key]=!SUN[key]; btn.setAttribute("aria-pressed",SUN[key]); drawOverlay(); }
 document.getElementById("chbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ch"));
 document.getElementById("pfssbtn").addEventListener("click",e=>setLayer(e.currentTarget,"pf"));
+document.getElementById("ofbtn").addEventListener("click",e=>setLayer(e.currentTarget,"of"));
 checkPfss(); setInterval(()=>{ if(!document.hidden) checkPfss(); }, 30*60*1000);
 document.getElementById("arbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ar"));
 document.getElementById("playbtn").addEventListener("click",()=>setPlaying(!SUN.playing));
