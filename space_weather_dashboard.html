@@ -219,7 +219,11 @@ footer a:hover{text-decoration:underline}
 <div class="hero">
     <section class="card sun" id="c-sun">
       <div class="sunhead">
-        <h2>The Sun <span class="rng">SDO/AIA 193 Å</span></h2>
+        <h2>The Sun <span class="rng" id="tag-sun">SDO/AIA 193 Å</span></h2>
+        <div class="tabs" role="group" aria-label="Instrument" id="instgrp" hidden>
+          <button class="pill" id="inst-aia" aria-pressed="true" title="Extreme ultraviolet: coronal holes are dark">AIA 193 Å</button>
+          <button class="pill" id="inst-hmi" aria-pressed="false" title="Magnetic field: white points towards us, black away">Magnetogram</button>
+        </div>
         <div class="tabs" role="group" aria-label="Layers">
           <button class="pill" id="chbtn" aria-pressed="true" title="Show coronal hole outlines">Coronal holes</button>
           <button class="pill" id="arbtn" aria-pressed="true" title="Show NOAA numbered active regions">Active regions</button>
@@ -319,6 +323,14 @@ footer a:hover{text-decoration:underline}
         <div class="meta" id="m-wind"></div>
       </section>
 
+    <section class="card" id="c-nm" hidden>
+      <h2>Cosmic rays at the ground <span class="rng">Oulu neutron monitor · last 3 days</span></h2>
+      <p class="desc">How many cosmic rays reach the ground at Oulu in Finland, as the percent change from its 3-day median. A dip lasting hours to days is usually a Forbush decrease after a coronal mass ejection or storm. A rise of several percent within minutes can be a ground-level enhancement (GLE), which is rare but has happened several times this cycle.</p>
+      <div class="chart" id="ch-nm"></div>
+      <div class="meta" id="m-nm"></div>
+      <p class="attr">Neutron monitor data: Oulu neutron monitor (University of Oulu / Sodankylä Geophysical Observatory), via NMDB, www.nmdb.eu, founded under the European Union's FP7 programme (contract no. 213007).</p>
+    </section>
+
     <section class="card" id="c-kp">
         <h2>Geomagnetic activity (Kp) <span class="rng" id="tag-kp"></span></h2>
         <p class="desc">Three-hourly planetary Kp, with NOAA's forecast for the next three days. Kp 5 or more is a geomagnetic storm (G1).</p>
@@ -344,10 +356,14 @@ footer a:hover{text-decoration:underline}
         <p>Protons accelerated by flares and CMEs can reach Earth within minutes to hours. A radiation storm (S1 or above) begins when the flux of protons above 10 MeV reaches 10 pfu (particles per cm² per second per steradian). S2 is 100, S3 is 1,000, S4 is 10,000 and S5 is 100,000. These mostly matter for satellites, astronauts and high-latitude flights, rather than for people on the ground. The S-level only looks at protons above 10 MeV. Studies of ground-level enhancements describe how hard the spectrum is with a spectral index: the slope of a power law, J(E) ∝ E<sup>−γ</sup>, fitted to the differential proton flux in the channels above about 40 MeV. A smaller γ means a harder spectrum, which can matter more for aircraft and ground-level effects than the S-level alone suggests. The value changes through an event, and is usually flattest early on. The words hard, typical and soft are a rough guide and not an agreed standard. They split at the midpoints between published averages: ground-level events average a slope of about 3.2 above 40 MeV, while event-integrated 10–100 MeV studies give about 2.7 for GLEs, 3.8 for regular large SEP events and 4.9 for filament-eruption events. So below 3.2 is called hard, and above 4.4 soft. The fit uses only channels that are clearly above their quiet-time level, so it is shown only during a significant event. NOAA issues its own alert when the ≥100 MeV flux reaches 1 pfu.</p></details>
       <details style="--c:#5aa9ff"><summary>Active regions</summary>
         <p>Active regions are the Sun's sunspot groups. NOAA gives each a number (for example AR4560) and a magnetic class. Simple groups (alpha, beta) rarely produce big flares, while more complex classes (beta-gamma, delta) are more likely to. Where a region sits on the disc also matters. Flares and CMEs from regions near the centre are more likely to be aimed at Earth.</p></details>
+      <details style="--c:#ff9a2e"><summary>The magnetogram</summary>
+        <p>A magnetogram maps the Sun's magnetic field along our line of sight, measured by the HMI instrument on NASA's Solar Dynamics Observatory. White is field pointing towards us (positive) and black is field pointing away (negative), with grey where the field is weak. Active regions show up as close pairs of white and black patches. Coronal holes are regions where the field mostly points one way, which is why the outlines on the pictures are coloured pink for positive and blue for negative. The data used here arrive about an hour after they are measured.</p></details>
       <details style="--c:#ff9a2e"><summary>Coronal holes</summary>
         <p>Coronal holes are the dark patches in the AIA 193 Å image. The Sun's magnetic field is open there, so fast solar wind streams out. A hole facing Earth can send a fast stream that typically arrives a few days later. On the picture the outline colour shows the hole's magnetic polarity: pink is positive (field pointing outward) and blue is negative. Holes are labelled by where they sit on the disc.</p></details>
       <details style="--c:#8bd450"><summary>The aurora oval map</summary>
         <p>The auroral oval is the ring around the magnetic pole where aurora is most likely. It grows and moves towards the equator when geomagnetic activity rises. On the map the colour shows the forecast chance of aurora, with the ring pink on the map marking the UK. Because aurora is high up, it can sometimes be seen low on the northern horizon from further south than the band itself, in dark and clear skies. Cloud and moonlight matter as much as the forecast.</p></details>
+      <details style="--c:#b48cff"><summary>Neutron monitors and ground-level enhancements</summary>
+        <p>A neutron monitor counts the secondary particles made when cosmic rays hit the atmosphere. Most of those are galactic cosmic rays, whose count dips for hours to days after a coronal mass ejection or geomagnetic storm (a Forbush decrease). Very rarely a solar eruption accelerates protons to energies high enough to add to the count at the ground. That is a ground-level enhancement, or GLE. It builds over several minutes, shows at several stations, and is judged by experts. This chart is only a quick look at real-time data from one station, which has not been checked by a human, so a single spike can be an instrument error.</p></details>
       <details style="--c:#ff9a2e"><summary>The corona and CMEs</summary>
         <p>The corona is the Sun's outer atmosphere, which is far fainter than the Sun's disc. A coronagraph blocks the disc so the corona shows up. A coronal mass ejection (CME) appears as a cloud that brightens and moves outward over several frames. Whether it is aimed at Earth is hard to tell from one view. Forecasters combine coronagraph images with other data to judge that, and a CME that is Earth-directed usually takes a day or more to arrive.</p></details>
       <details style="--c:#ff9a2e"><summary>The connectivity map</summary>
@@ -378,6 +394,8 @@ const CONFIG = {
   gammaBands: [3.2, 4.4],           // words: below the first = hard, between = typical, above the second = soft. Midpoints between published group averages (see the tooltip), not an agreed standard
   showFluenceIndex: false,          // true adds the older "F>=100 / F>=30 MeV" fluence ratio line
   fluenceMin30: 1e5, fluenceMin100: 1e4,   // minimum background-subtracted fluences (cm^-2 sr^-1, last 3 days) for that fluence ratio
+  neutronUrl: "neutron.json",         // Oulu neutron monitor data from NMDB (made by the hourly job)
+  hmiUrl: "hmi_frames.json",         // near-real-time HMI magnetogram pictures, every 2 hours (made by the hourly job)
   auroraUrl: "met_aurora.json",        // Met Office aurora forecast frames + text (made by the hourly job)
   coronaDir: "https://services.swpc.noaa.gov/images/animations/ccor2/",   // NOAA coronagraph frames (every 15 min)
   sdoLatest: "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg",
@@ -738,9 +756,10 @@ function renderSummary(){
       L.push(["Radiation",sv?`Proton flux (≥10 MeV) reached ${n(fmtPfu(pk[1])+" pfu")}, a radiation storm (${n("S"+sv)}).`:`Proton flux stayed at background levels (peak ${n(fmtPfu(pk[1])+" pfu")}, well below the 10 pfu S1 threshold).`,COL.rad]);
     }
   }
-  if(D.regions&&D.regions.length){
-    const withA=D.regions.filter(x=>x.area!=null), big=withA.length?withA.reduce((m,x)=>x.area>m.area?x:m):null;
-    L.push(["Active regions",`${n(D.regions.length)} numbered region${D.regions.length===1?"":"s"} on NOAA's list`+(big?`; the largest is ${n("AR"+big.region)} (${n(big.area+" µHem")}${big.mag_class?", magnetic class "+big.mag_class:""}).`:"."),COL.ar]);
+  if(D.regions){
+    const vis=projectRegions(D.regions,now,sunGeom(now,"hv")).map(p=>p.r);
+    const withA=vis.filter(x=>x.area!=null), big=withA.length?withA.reduce((m,x)=>x.area>m.area?x:m):null;
+    L.push(["Active regions",vis.length?`${n(vis.length)} numbered region${vis.length===1?"":"s"} on the visible disc`+(big?`; the largest is ${n("AR"+big.region)} (${n(big.area+" µHem")}${big.mag_class?", magnetic class "+big.mag_class:""}).`:". None has sunspots large enough to measure."):"No numbered regions on the visible disc.",COL.ar]);
   }
   const lvl=Math.max(g,sv,r);
   const el=document.getElementById("sum-lvl");
@@ -767,7 +786,7 @@ async function load(){
     kp:     get(EP.kp).then(r=>r.map(x=>({t:tms(x.time_tag),kp:+x.kp,obs:x.observed})).sort((a,b)=>a.t-b.t)),
     scales: get(EP.scales).then(r=>r["0"]),
     probs:  get(EP.probs).then(r=>r.reduce((m,x)=>x.date>m.date?x:m,r[0])),
-    regions:get(EP.regions).then(r=>{const d=r.reduce((m,x)=>x.observed_date>m?x.observed_date:m,"");return r.filter(x=>x.observed_date===d);})
+    regions:get(EP.regions).then(r=>{const fin=r.filter(x=>x.status), pool=fin.length?fin:r, d=pool.reduce((m,x)=>x.observed_date>m?x.observed_date:m,"");return pool.filter(x=>x.observed_date===d);})
   };
   const keys=Object.keys(jobs), res=await Promise.allSettled(keys.map(k=>jobs[k]));
   const next={}; let ok=0;
@@ -811,17 +830,17 @@ function projectPt(lon,lat,dd,g){
   const z=Math.sin(phi)*Math.sin(B)+Math.cos(phi)*Math.cos(lam)*Math.cos(B);
   return {px:g.cx+g.r*x,py:g.cy-g.r*y,z};
 }
-// NOAA numbered regions (positions are for 00:00 UTC of their date, rotated forward to time t)
+// NOAA numbered regions (positions are valid at 24:00 UTC of their date, rotated to time t)
 function projectRegions(regs,t,g){
   const out=[];
   (regs||[]).forEach(r=>{
-    const t0=Date.parse(r.observed_date+"T00:00:00Z");
+    const t0=Date.parse(r.observed_date+"T00:00:00Z")+864e5;          // NOAA's locations are valid at 24:00 UTC of that date
     const q=projectPt(-r.longitude,r.latitude,(t-t0)/864e5,g);
     if(q.z>=0.03) out.push({px:q.px,py:q.py,r});
   });
   return out;
 }
-const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false};
+const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false,mode:"aia",aia:[],hmiSet:null,hmiOk:false};
 const cv=document.getElementById("suncv"), cx2=cv.getContext("2d"), ov=document.getElementById("sunov");
 
 function arOverlay(t,g){
@@ -885,12 +904,13 @@ async function preloadAll(){
   const jobs=SUN.frames.map(async f=>{ if(!f.img){ try{ f.img=await loadImg(f.url+"?v="+f.t); }catch(e){ f.img=null; } } });
   await Promise.all(jobs);
   SUN.frames=SUN.frames.filter(f=>f.img);
+  if(SUN.mode==="hmi") SUN.hmiSet=SUN.frames; else SUN.aia=SUN.frames;
   document.getElementById("scrub").max=Math.max(SUN.frames.length-1,0);
   SUN.loadedAll=true;
   document.getElementById("playbtn").disabled=SUN.frames.length<2;
 }
 async function initSun(){
-  const meta=document.getElementById("m-sun");
+  const meta=document.getElementById("m-sun"), keepMode=SUN.mode;
   setMsg("Loading the Sun…");
   let man=null;
   try{ const r=await fetch(CONFIG.framesUrl+"?t="+Math.floor(Date.now()/3e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status); man=await r.json(); }catch(e){ man=null; }
@@ -899,14 +919,16 @@ async function initSun(){
   if(man&&man.frames&&man.frames.length){
     const wasPlaying=SUN.playing; setPlaying(false);
     SUN.fallback=false;
-    SUN.frames=man.frames.map(f=>({t:Date.parse(f.t),url:f.f,img:null}));
+    SUN.frames=man.frames.map(f=>({t:Date.parse(f.t),url:f.f,img:null})); SUN.aia=SUN.frames; SUN.mode="aia";
     const last=SUN.frames[SUN.frames.length-1];
     try{ last.img=await loadImg(last.url+"?v="+last.t); }catch(e){}
     document.getElementById("loopbar").hidden=false;
     document.getElementById("scrub").max=SUN.frames.length-1; document.getElementById("playbtn").disabled=true;
     showFrame(SUN.frames.length-1); setMsg("");
     meta.textContent="Hourly SDO/AIA 193 Å pictures from Helioviewer for the last 24 hours. Dark patches are coronal holes, the source of fast solar wind. Outlines show holes detected in the latest picture (pink = positive magnetic polarity, blue = negative), moved with the Sun's rotation for earlier frames. Orange circles are NOAA numbered active regions.";
+    SUN.metaAia=meta.textContent;
     preloadAll().then(()=>{ if(wasPlaying) setPlaying(true); });
+    checkHmi().then(()=>{ if(keepMode==="hmi"&&SUN.hmiOk) switchInst("hmi"); });
   } else {
     // fallback: the job's frames are not there (yet), show SDO's own latest image with the regions only
     SUN.fallback=true; SUN.frames=[]; document.getElementById("loopbar").hidden=true; document.getElementById("chbtn").hidden=true;
@@ -915,6 +937,48 @@ async function initSun(){
     catch(e){ setMsg("The Sun picture isn't available right now. Please try again in a few minutes."); }
   }
 }
+
+/* ---- AIA 193 / HMI magnetogram switch ---- */
+async function checkHmi(){
+  try{
+    const r=await fetch(CONFIG.hmiUrl+"?t="+Math.floor(Date.now()/6e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
+    const m=await r.json(); if(!m.frames||!m.frames.length) throw new Error("no frames");
+    SUN.hmiMan=m; SUN.hmiOk=true; SUN.hmiSet=null;                // reload the pictures lazily, only when someone switches to the magnetogram
+    document.getElementById("instgrp").hidden=false;
+  }catch(e){ SUN.hmiOk=false; document.getElementById("instgrp").hidden=true; if(SUN.mode==="hmi"){ SUN.mode="aia"; SUN.frames=SUN.aia; } }
+}
+function nearestIdx(frames,t){ let b=0; frames.forEach((f,i)=>{ if(Math.abs(f.t-t)<Math.abs(frames[b].t-t)) b=i; }); return b; }
+async function switchInst(mode){
+  if(SUN.fallback) return;
+  setPlaying(false);
+  const t=SUN.frames[SUN.idx]?SUN.frames[SUN.idx].t:Date.now(), meta=document.getElementById("m-sun");
+  if(mode==="hmi"){
+    if(!SUN.hmiOk) return;
+    if(!SUN.hmiSet){
+      setMsg("Loading the magnetogram…");
+      SUN.hmiSet=SUN.hmiMan.frames.map(f=>({t:Date.parse(f.t),url:f.f,img:null}));
+      const best=SUN.hmiSet[nearestIdx(SUN.hmiSet,t)], last=SUN.hmiSet[SUN.hmiSet.length-1];
+      for(const f of (best===last?[last]:[best,last])){ try{ f.img=await loadImg(f.url+"?v="+f.t); }catch(e){} }
+      setMsg("");
+    }
+    SUN.frames=SUN.hmiSet; SUN.mode="hmi";
+  } else { SUN.frames=SUN.aia; SUN.mode="aia"; }
+  document.getElementById("inst-aia").setAttribute("aria-pressed",SUN.mode==="aia");
+  document.getElementById("inst-hmi").setAttribute("aria-pressed",SUN.mode==="hmi");
+  document.getElementById("tag-sun").textContent=SUN.mode==="hmi"?"SDO/HMI magnetogram":"SDO/AIA 193 Å";
+  meta.textContent=SUN.mode==="hmi"
+    ? "SDO/HMI line-of-sight magnetogram, one picture every two hours for the last 24 hours. White is magnetic field pointing towards us (positive), black is field pointing away (negative), grey is weak field. This near-real-time data arrives about an hour behind the AIA pictures, so the latest time is earlier. The field along the line of sight is less reliable near the edge of the disc. Outlines and circles are as for AIA."
+    : (SUN.metaAia||"");
+  const i=nearestIdx(SUN.frames,t);
+  document.getElementById("scrub").max=SUN.frames.length-1; document.getElementById("playbtn").disabled=true;
+  showFrame(i);
+  Promise.all(SUN.frames.map(async f=>{ if(!f.img){ try{ f.img=await loadImg(f.url+"?v="+f.t); }catch(e){} } })).then(()=>{
+    SUN.frames=SUN.frames.filter(f=>f.img); if(SUN.mode==="hmi") SUN.hmiSet=SUN.frames; else SUN.aia=SUN.frames;
+    document.getElementById("scrub").max=Math.max(SUN.frames.length-1,0); document.getElementById("playbtn").disabled=SUN.frames.length<2;
+  });
+}
+document.getElementById("inst-aia").addEventListener("click",()=>switchInst("aia"));
+document.getElementById("inst-hmi").addEventListener("click",()=>switchInst("hmi"));
 function setLayer(btn,key){ SUN[key]=!SUN[key]; btn.setAttribute("aria-pressed",SUN[key]); drawOverlay(); }
 document.getElementById("chbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ch"));
 document.getElementById("arbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ar"));
@@ -1122,6 +1186,28 @@ document.getElementById("anow").addEventListener("click",()=>{ aPlay(false); aSh
 document.getElementById("ascrub").addEventListener("input",e=>{ aPlay(false); ensureAurFrames().then(()=>aShow(+e.target.value)); aShow(+e.target.value); });
 initAurora();
 setInterval(()=>{ if(!document.hidden && !AUR.playing) initAurora(); }, 30*60*1000);
+
+/* ============ Neutron monitor (Oulu, via NMDB) ============ */
+async function initNeutron(){
+  const card=document.getElementById("c-nm");
+  try{
+    const r=await fetch(CONFIG.neutronUrl+"?t="+Math.floor(Date.now()/6e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
+    const d=await r.json(), st=d.stations&&d.stations[0]; if(!st||!st.pts||st.pts.length<20) throw new Error("no data");
+    const now=Date.now(), t0=now-72*36e5, pts=st.pts.filter(p=>p[0]>=t0);
+    if(pts.length<20) throw new Error("too few recent points");
+    const vals=pts.map(p=>p[1]), ny=niceTicks(Math.min(...vals,-1)-0.3,Math.max(...vals,1)+0.3,4);
+    card.hidden=false;
+    lineChart(document.getElementById("ch-nm"),{h:170,t:[t0,now],y:[ny.y0,ny.y1],label:"Neutron monitor count rate, percent change",gap:40*6e4,tipGap:30*6e4,
+      ticks:ny.ticks.map(v=>({v,label:(v>0?"+":"")+(Math.abs(v)<10&&v%1?v.toFixed(1):v)+"%"})),
+      series:[{name:st.name||"Oulu",pts:pts,color:C.violet,w:1.5,fmt:v=>(v>0?"+":"")+v.toFixed(1)+"%"}]});
+    const l=pts[pts.length-1], age=Math.round((now-l[0])/6e4);
+    document.getElementById("m-nm").textContent=`Latest ${hhmm(l[0])} UTC${age>90?` (${Math.round(age/60)} h ago)`:""}: ${(l[1]>0?"+":"")+l[1].toFixed(1)}% from the 3-day median. Real-time data are not checked by a human, so a single spike can be an instrument error. A real ground-level enhancement builds over several minutes and shows at more than one station.`;
+    setTimeout(()=>{ if(typeof balanceColumns==="function") balanceColumns(); },150);
+  }catch(e){ card.hidden=true; }
+}
+initNeutron();
+setInterval(()=>{ if(!document.hidden) initNeutron(); }, 10*60*1000);
+
 /* keep the two columns level when pictures load or the window changes */
 (function(){
   let t=null; const go=()=>{ clearTimeout(t); t=setTimeout(balanceColumns,120); };
