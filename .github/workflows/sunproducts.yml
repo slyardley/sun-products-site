@@ -76,6 +76,7 @@ jobs:
             --frames-dir site/aia \
             --frames-prev-url https://forecast.stephyardley.com \
             --met-aurora-dir site \
+            --lasco-dir site \
             --hmi-dir site \
             --out site/earth_connectivity_now.png
           ls -la site
