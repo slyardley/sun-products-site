@@ -276,6 +276,7 @@ footer a:hover{text-decoration:underline}
         <div class="legend"><span><i style="background:var(--amber)"></i>≥10 MeV</span><span><i style="background:var(--pink)"></i>≥50 MeV</span><span><i style="background:var(--violet)"></i>≥100 MeV</span></div>
         <div class="chart" id="ch-prot"></div>
         <div class="oline" id="o-prot"></div>
+        <div class="oline" id="o-hard"></div>
         <div class="meta" id="m-prot"></div>
       </section>
 
@@ -340,7 +341,7 @@ footer a:hover{text-decoration:underline}
       <details style="--c:#ff6b81"><summary>X-ray flux and flare classes</summary>
         <p>Solar flares are ranked by their peak X-ray brightness: A, B, C, M and X, each ten times stronger than the one before. The number is a multiplier, so an X2 is twice an X1. C-class flares are common and usually have little effect at Earth. M and X flares can cause radio blackouts on the sunlit side of Earth: M1 is R1, M5 is R2, X1 is R3, X10 is R4 and X20 is R5.</p></details>
       <details style="--c:#ffc94d"><summary>Proton flux and radiation storms</summary>
-        <p>Protons accelerated by flares and CMEs can reach Earth within minutes to hours. A radiation storm (S1 or above) begins when the flux of protons above 10 MeV reaches 10 pfu (particles per cm² per second per steradian). S2 is 100, S3 is 1,000, S4 is 10,000 and S5 is 100,000. These mostly matter for satellites, astronauts and high-latitude flights, rather than for people on the ground.</p></details>
+        <p>Protons accelerated by flares and CMEs can reach Earth within minutes to hours. A radiation storm (S1 or above) begins when the flux of protons above 10 MeV reaches 10 pfu (particles per cm² per second per steradian). S2 is 100, S3 is 1,000, S4 is 10,000 and S5 is 100,000. These mostly matter for satellites, astronauts and high-latitude flights, rather than for people on the ground. The S-level only looks at protons above 10 MeV. Studies of ground-level enhancements describe how hard the spectrum is with a spectral index: the slope of a power law, J(E) ∝ E<sup>−γ</sup>, fitted to the differential proton flux in the channels above about 40 MeV. A smaller γ means a harder spectrum, which can matter more for aircraft and ground-level effects than the S-level alone suggests. The value changes through an event, and is usually flattest early on. The words hard, typical and soft are a rough guide and not an agreed standard. They split at the midpoints between published averages: ground-level events average a slope of about 3.2 above 40 MeV, while event-integrated 10–100 MeV studies give about 2.7 for GLEs, 3.8 for regular large SEP events and 4.9 for filament-eruption events. So below 3.2 is called hard, and above 4.4 soft. The fit uses only channels that are clearly above their quiet-time level, so it is shown only during a significant event. NOAA issues its own alert when the ≥100 MeV flux reaches 1 pfu.</p></details>
       <details style="--c:#5aa9ff"><summary>Active regions</summary>
         <p>Active regions are the Sun's sunspot groups. NOAA gives each a number (for example AR4560) and a magnetic class. Simple groups (alpha, beta) rarely produce big flares, while more complex classes (beta-gamma, delta) are more likely to. Where a region sits on the disc also matters. Flares and CMEs from regions near the centre are more likely to be aimed at Earth.</p></details>
       <details style="--c:#ff9a2e"><summary>Coronal holes</summary>
@@ -372,6 +373,11 @@ const CONFIG = {
   connectivityImage: "earth_connectivity_now.png",  // change to wherever you host the latest slide
   framesUrl: "aia_frames.json",     // hourly AIA 193 frames for the last 24 h (made by the hourly job)
   chUrl: "ch_outlines.json",        // coronal hole outlines from the latest detection (made by the hourly job)
+  diffFetchMinPfu: 0.6,             // only fetch the differential proton channels when the >=30 MeV flux has gone above this (pfu) in the last 24 h
+  gammaSignal: 3, gammaMinChannels: 4,   // a channel counts when it is this many times its own quiet-time level; at least this many channels are needed for a fit
+  gammaBands: [3.2, 4.4],           // words: below the first = hard, between = typical, above the second = soft. Midpoints between published group averages (see the tooltip), not an agreed standard
+  showFluenceIndex: false,          // true adds the older "F>=100 / F>=30 MeV" fluence ratio line
+  fluenceMin30: 1e5, fluenceMin100: 1e4,   // minimum background-subtracted fluences (cm^-2 sr^-1, last 3 days) for that fluence ratio
   auroraUrl: "met_aurora.json",        // Met Office aurora forecast frames + text (made by the hourly job)
   coronaDir: "https://services.swpc.noaa.gov/images/animations/ccor2/",   // NOAA coronagraph frames (every 15 min)
   sdoLatest: "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg",
@@ -384,6 +390,7 @@ const EP = {
   kp:     "/products/noaa-planetary-k-index-forecast.json",
   scales: "/products/noaa-scales.json",
   regions:"/json/solar_regions.json",
+  diff:   "/json/goes/primary/differential-protons-1-day.json",
   probs:  "/json/solar_probabilities.json",
   suvi:   "/products/animations/suvi-primary-195.json"
 };
@@ -756,7 +763,7 @@ async function load(){
     wind:   get(EP.wind).then(prepWind),
     mag:    get(EP.mag).then(prepMag),
     xray:   get(EP.xray).then(r=>({long:bySel(r,"energy","0.1-0.8nm"),short:bySel(r,"energy","0.05-0.4nm"),sat:(r[r.length-1]||{}).satellite})),
-    prot:   get(EP.prot).then(r=>({p10:bySel(r,"energy",">=10 MeV"),p50:bySel(r,"energy",">=50 MeV"),p100:bySel(r,"energy",">=100 MeV"),sat:(r[r.length-1]||{}).satellite})),
+    prot:   get(EP.prot).then(r=>({p10:bySel(r,"energy",">=10 MeV"),p30:bySel(r,"energy",">=30 MeV"),p50:bySel(r,"energy",">=50 MeV"),p100:bySel(r,"energy",">=100 MeV"),sat:(r[r.length-1]||{}).satellite})),
     kp:     get(EP.kp).then(r=>r.map(x=>({t:tms(x.time_tag),kp:+x.kp,obs:x.observed})).sort((a,b)=>a.t-b.t)),
     scales: get(EP.scales).then(r=>r["0"]),
     probs:  get(EP.probs).then(r=>r.reduce((m,x)=>x.date>m.date?x:m,r[0])),
@@ -766,7 +773,11 @@ async function load(){
   const next={}; let ok=0;
   res.forEach((r,i)=>{ if(r.status==="fulfilled"){next[keys[i]]=r.value;ok++;} else console.warn(keys[i],r.reason); });
   DATA=Object.assign({},DATA,next);   // keep previous data for any feed that failed this time
-  renderScales(); renderAll(); renderSummary(); renderOutlook(); drawOverlay(); setTimeout(balanceColumns,50);
+  try{                                // the differential proton channels are large (about 0.5 MB), so only fetch them during an event
+    const rec=(DATA.prot&&DATA.prot.p30||[]).filter(q=>q[0]>=Date.now()-864e5);
+    DATA.diff=(rec.length&&Math.max(...rec.map(q=>q[1]))>=CONFIG.diffFetchMinPfu)?parseDiff(await get(EP.diff)):null;
+  }catch(e){ console.warn("differential protons",e); }
+  renderScales(); renderAll(); renderSummary(); renderOutlook(); renderHardness(); drawOverlay(); setTimeout(balanceColumns,50);
   const t=document.getElementById("updtxt"), dot=document.querySelector("#upd .dot");
   t.textContent=ok===keys.length?"Updated "+hhmm(Date.now())+" UTC":(ok?"Partly updated "+hhmm(Date.now())+" UTC":"Can't reach NOAA");
   dot.style.background=ok===keys.length?C.pos:(ok?C.amber:C.neg);
@@ -964,6 +975,72 @@ setInterval(()=>{ if(!document.hidden && !COR.playing) initCorona(); }, 30*60*10
 
 /* ============ 3-day outlook (NOAA): max Kp, flare chance, proton storm ============ */
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+/* ---- Hardness (1): dynamic spectral index from a power-law fit to the GOES differential proton channels above 40 MeV ----
+   J(E) ~ E^-gamma, fitted at 5-minute cadence as in published SEP/GLE dynamic-index studies. Smaller gamma = harder spectrum.
+   Only channels clearly above their own quiet-time level are used, so a soft event simply fits over fewer channels. */
+const DIFF_BANDS=["40300-73400 keV","83700-98500 keV","99900-118000 keV","115000-143000 keV","160000-242000 keV","276000-404000 keV"];
+function parseDiff(rows){
+  const times=new Map(), series={}; DIFF_BANDS.forEach(b=>series[b]=[]);
+  rows.forEach(x=>{ if(x.flux==null||!(x.flux>0)||!DIFF_BANDS.includes(x.energy)) return;
+    const t=tms(x.time_tag); series[x.energy].push(x.flux); if(!times.has(t)) times.set(t,{}); times.get(t)[x.energy]=x.flux; });
+  const base={}, E={};
+  DIFF_BANDS.forEach(b=>{ const v=series[b].slice().sort((a,c)=>a-c), q=v.slice(0,Math.max(5,Math.floor(v.length*0.25)));
+    base[b]=q.length?q[Math.floor(q.length/2)]:Infinity;
+    const m=/^(\d+)-(\d+) keV$/.exec(b); E[b]=Math.sqrt((+m[1]/1000)*(+m[2]/1000)); });     // effective energy: geometric mean of the band edges (MeV)
+  const pts=[...times.keys()].sort((a,b)=>a-b).map(t=>{
+    const row=times.get(t), use=DIFF_BANDS.filter(b=>row[b]!=null&&row[b]>=CONFIG.gammaSignal*base[b]);
+    if(use.length<CONFIG.gammaMinChannels) return {t,g:null};
+    const x=use.map(b=>Math.log(E[b])), y=use.map(b=>Math.log(row[b])), n=x.length, mx=x.reduce((a,c)=>a+c,0)/n, my=y.reduce((a,c)=>a+c,0)/n;
+    let sxy=0,sxx=0; for(let i=0;i<n;i++){ sxy+=(x[i]-mx)*(y[i]-my); sxx+=(x[i]-mx)*(x[i]-mx); }
+    return {t,g:-sxy/sxx,lo:E[use[0]],hi:E[use[use.length-1]],n,top:use[use.length-1]};
+  });
+  // smooth with a running median over three 5-minute fits
+  const sm=pts.map((p,i)=>{ const w=[pts[i-1],p,pts[i+1]].filter(q=>q&&q.g!=null).map(q=>q.g).sort((a,b)=>a-b);
+    return p.g==null||w.length<2?{...p,s:null}:{...p,s:w[Math.floor(w.length/2)]}; });
+  return sm;
+}
+const bandMeV=b=>{ const m=/^(\d+)-(\d+) keV$/.exec(b); return Math.round(+m[1]/1000)+"–"+Math.round(+m[2]/1000); };
+function gammaLine(){
+  const D=DATA.diff;
+  if(D===undefined) return "";
+  if(D===null||!D.length) return `Spectral index γ (power-law fit, 40–400 MeV): <span style="opacity:.8">not shown, as there has been no significant proton event in the last 24 hours.</span>`;
+  const ok=D.filter(p=>p.s!=null);
+  if(!ok.length) return `Spectral index γ (power-law fit, 40–400 MeV): <span style="opacity:.8">not shown, as the high-energy channels are not yet clearly above background.</span>`;
+  const now=Date.now(), cur=ok.filter(p=>now-p.t<=20*6e4).pop(), flat=ok.reduce((m,p)=>p.s<m.s?p:m);
+  const rng=p=>`${Math.round(p.lo)}–${Math.round(p.hi)} MeV`;
+  const [lo,hi]=CONFIG.gammaBands, word=g=>g<lo?"hard":g<hi?"typical":"soft";
+  let h="Spectral index γ: ";
+  h+=cur?`<b style="color:${CAT.rad}">${cur.s.toFixed(1)}</b> now · ${word(cur.s)} (fit ${rng(cur)})`:`<span style="opacity:.8">not available right now</span>`;
+  h+=`; flattest in the last 24 h <b style="color:${CAT.rad}">${flat.s.toFixed(1)}</b> · ${word(flat.s)}, at ${tl2(flat.t)} UTC. <span style="opacity:.7">Smaller γ means a harder spectrum.</span>`;
+  return h;
+}
+const tl2=t=>new Date(t).getUTCDate()===new Date().getUTCDate()?"today "+hhmm(t):dayLbl(t)+" "+hhmm(t);
+
+/* ---- Hardness (2), optional: ratio of event-integrated fluences F>=100 / F>=30 MeV, background subtracted (last 3 days) ---- */
+function fluenceExcess(pts){
+  if(!pts||pts.length<20) return null;
+  const v=pts.map(p=>p[1]).sort((a,b)=>a-b), q=v.slice(0,Math.max(5,Math.floor(v.length*0.25))), base=q[Math.floor(q.length/2)];
+  let F=0;
+  for(let i=1;i<pts.length;i++){ const dt=(pts[i][0]-pts[i-1][0])/1000; if(dt<=0||dt>3600) continue; F+=Math.max(0,(pts[i][1]+pts[i-1][1])/2-base)*dt; }
+  return F;
+}
+function fluenceLine(){
+  const D=DATA.prot; if(!D) return "";
+  const F30=fluenceExcess(D.p30), F100=fluenceExcess(D.p100);
+  if(F30===null||F100===null||!(F30>=CONFIG.fluenceMin30)) return `Fluence ratio (F≥100 ÷ F≥30 MeV, last 3 days): <span style="opacity:.8">not shown, as there has been no significant ≥30 MeV proton event.</span>`;
+  if(!(F100>=CONFIG.fluenceMin100)) return `Fluence ratio (F≥100 ÷ F≥30 MeV, last 3 days): <span style="opacity:.8">not shown, as the ≥100 MeV fluence is still at background level.</span>`;
+  const r=F100/F30, t=r>=0.095?r.toFixed(2):r>=0.0095?r.toFixed(3):r.toFixed(4);
+  return `Fluence ratio (F≥100 ÷ F≥30 MeV, last 3 days): <b style="color:${CAT.rad}">${t}</b>. <span style="opacity:.7">Higher means harder.</span>`;
+}
+function renderHardness(){
+  const el=document.getElementById("o-hard"); if(!el) return;
+  const D=DATA.prot; if(!D){ el.textContent=""; return; }
+  const l100=last(D.p100), parts=[gammaLine()];
+  if(CONFIG.showFluenceIndex) parts.push(fluenceLine());
+  if(l100) parts.push(`≥100 MeV flux now: <b style="color:${CAT.rad}">${fmtPfu(l100[1])} pfu</b>. NOAA's ≥100 MeV alert level is 1 pfu.`);
+  el.innerHTML=parts.filter(Boolean).join("<br>");
+  el.title="γ is the slope of a power-law fit, J(E) ∝ E^−γ, to NOAA's GOES differential proton channels above 40 MeV, using only channels clearly above their quiet-time level. The words are a rough guide, not an agreed standard: they split at the midpoints between published averages. Reference values: mean slope 3.18 above 40 MeV for ground-level events (Mewaldt et al. 2012); mean 10–100 MeV fluence indices of 2.7 for GLEs, 3.8 for regular large SEP events and 4.9 for filament-eruption events (Gopalswamy et al. 2016, event-integrated, so not the same measure as this time-resolved fit). Below "+CONFIG.gammaBands[0]+" is called hard, above "+CONFIG.gammaBands[1]+" soft. The spectrum usually softens as an event goes on, so the flattest value is often early.";
+}
 function renderOutlook(){
   const P=DATA.probs, ex=document.getElementById("o-xray"), op=document.getElementById("o-prot");
   if(!ex||!op) return;
