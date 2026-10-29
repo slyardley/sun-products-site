@@ -136,15 +136,12 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#1a1205}
 .seg[hidden]{display:none}
-select.sel{appearance:none;-webkit-appearance:none;flex:none;max-width:60%;color-scheme:dark;background:rgba(255,255,255,.03) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e99b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center;border:1px solid var(--card-edge);border-radius:999px;color:var(--text);font:inherit;font-size:12px;font-weight:600;padding:5px 28px 5px 13px;cursor:pointer;text-overflow:ellipsis}
-select.sel:hover{border-color:var(--accent)}
-select.sel:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-select.sel[hidden]{display:none}
 .xlink{margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
 .xlink a{color:var(--accent);text-decoration:none}
 .xlink a:hover{text-decoration:underline}
 .sunhead h2{white-space:nowrap}
-@media (max-width:480px){.seg .long{display:none}.seg button{padding:4px 9px}}
+.seg .short{display:none}
+@media (max-width:480px){.seg .long{display:none}.seg .short{display:inline}.seg button{padding:4px 9px}}
 .chips{position:absolute;left:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:3;max-width:calc(100% - 20px)}
 .chips .pill{padding:3px 10px;font-size:11.5px;background:rgba(8,12,24,.74);border-color:rgba(255,255,255,.16)}
 .chips .pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1a1205}
@@ -239,12 +236,12 @@ footer a:hover{text-decoration:underline}
     <section class="card sun" id="c-sun">
       <div class="sunhead">
         <h2>The Sun <span class="rng" id="tag-sun">SDO/AIA 193 Å</span></h2>
-        <select class="sel" id="instsel" aria-label="Choose the view of the Sun" hidden>
-          <option value="aia">193 Å · coronal holes</option>
-          <option value="a304">304 Å · filaments</option>
-          <option value="a131">131 Å · flares</option>
-          <option value="hmi">Magnetogram</option>
-        </select>
+        <div class="seg" role="group" aria-label="Choose the view of the Sun" id="instgrp" hidden>
+          <button id="inst-aia" aria-pressed="true" title="193 Å: the corona, where coronal holes look dark">193<span class="long"> Å</span></button>
+          <button id="inst-a304" aria-pressed="false" title="304 Å: filaments and prominences" hidden>304<span class="long"> Å</span></button>
+          <button id="inst-a131" aria-pressed="false" title="131 Å: very hot plasma, so flares stand out" hidden>131<span class="long"> Å</span></button>
+          <button id="inst-hmi" aria-pressed="false" title="Magnetogram: magnetic polarity, white towards us and black away" hidden><span class="long">Magnetogram</span><span class="short">HMI</span></button>
+        </div>
       </div>
       <div class="stage" id="stage">
         <canvas id="suncv" width="700" height="700" role="img" aria-label="Sun in extreme ultraviolet light (AIA 193 Å)"></canvas>
@@ -385,7 +382,7 @@ footer a:hover{text-decoration:underline}
       <details style="--c:#5aa9ff"><summary>Active regions</summary>
         <p>Active regions are the Sun's sunspot groups. NOAA gives each a number (for example AR4560) and, for groups with sunspots, a magnetic class based on how the magnetic polarities are arranged. α (alpha) is a single dominant polarity, β (beta) is a simple pair of opposite polarities, γ (gamma) is a tangled mix with no clear dividing line, and δ (delta) has opposite polarities packed inside one sunspot. Combined names such as β-γ or β-γ-δ are more complex. Simple groups (α, β) rarely produce big flares, while the more complex classes are more likely to, although most regions never produce a large flare. Regions with no spots, only bright plage, have no class. Where a region sits on the disc also matters. Flares and CMEs from regions near the centre are more likely to be aimed at Earth.</p></details>
       <details style="--c:#ff9a2e"><summary>193, 304 and 131 Å: the different views of the Sun</summary>
-        <p>The Sun's atmosphere gives off light at different wavelengths depending on its temperature. The 193 Å view shows the corona at about a million degrees, where coronal holes look dark, and it is the one used for the outlines. The 304 Å view shows cooler gas in the chromosphere, so filaments appear as dark threads and prominences as bright loops, and an erupting filament can launch a CME. The 131 Å view picks out very hot plasma, so flares appear as brilliant patches, but it looks grainy on quiet days. Use the drop-down at the top of the Sun panel to switch between them and the magnetogram.</p></details>
+        <p>The Sun's atmosphere gives off light at different wavelengths depending on its temperature. The 193 Å view shows the corona at about a million degrees, where coronal holes look dark, and it is the one used for the outlines. The 304 Å view shows cooler gas in the chromosphere, so filaments appear as dark threads and prominences as bright loops, and an erupting filament can launch a CME. The 131 Å view picks out very hot plasma, so flares appear as brilliant patches, but it looks grainy on quiet days. Use the buttons at the top of the Sun panel to switch between them and the magnetogram.</p></details>
       <details style="--c:#ff9a2e"><summary>The magnetogram</summary>
         <p>A magnetogram maps the Sun's magnetic field along our line of sight, measured by the HMI instrument on NASA's Solar Dynamics Observatory. White is field pointing towards us (positive) and black is field pointing away (negative), with grey where the field is weak. Active regions show up as close pairs of white and black patches. Coronal holes are regions where the field mostly points one way, which is why the outlines on the pictures are coloured pink for positive and blue for negative. The data used here arrive about an hour after they are measured.</p></details>
       <details style="--c:#ff9a2e"><summary>Coronal holes</summary>
@@ -980,24 +977,24 @@ const VIEWS={
   hmi:{url:"hmiUrl",tag:"SDO/HMI magnetogram",text:"SDO/HMI line-of-sight magnetogram, one picture every two hours for the last 24 hours. White is magnetic field pointing towards us (positive), black is field pointing away (negative), grey is weak field. This near-real-time data arrives about an hour behind the AIA pictures, so the latest time is earlier. The field along the line of sight is less reliable near the edge of the disc. Outlines and circles are as for AIA."}
 };
 async function checkViews(){
-  const sel=document.getElementById("instsel"); let any=false;
+  const grp=document.getElementById("instgrp"); let any=false;
   await Promise.all(Object.keys(VIEWS).map(async k=>{
     try{
       const r=await fetch(CONFIG[VIEWS[k].url]+"?t="+Math.floor(Date.now()/6e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
       const m=await r.json(); if(!m.frames||!m.frames.length) throw new Error("no frames");
       SUN.man[k]=m; SUN.sets[k]=null;                                  // the pictures load lazily, only when someone picks that view
     }catch(e){ SUN.man[k]=null; SUN.sets[k]=null; }
-    const opt=sel.querySelector('option[value="'+k+'"]'), ok=!!SUN.man[k]; opt.hidden=!ok; opt.disabled=!ok; any=any||ok;
+    const ok=!!SUN.man[k]; document.getElementById("inst-"+k).hidden=!ok; any=any||ok;
   }));
-  sel.hidden=!any; document.getElementById("tag-sun").hidden=any;
+  grp.hidden=!any; document.getElementById("tag-sun").hidden=any;
   if(SUN.mode!=="aia"&&!SUN.man[SUN.mode]){ SUN.mode="aia"; SUN.frames=SUN.aia; }
-  sel.value=SUN.mode;
+  setPressed(SUN.mode);
 }
+function setPressed(mode){ ["aia","a304","a131","hmi"].forEach(k=>document.getElementById("inst-"+k).setAttribute("aria-pressed",k===mode)); }
 function nearestIdx(frames,t){ let b=0; frames.forEach((f,i)=>{ if(Math.abs(f.t-t)<Math.abs(frames[b].t-t)) b=i; }); return b; }
 async function switchInst(mode){
   if(SUN.fallback) return;
-  const sel=document.getElementById("instsel");
-  if(mode!=="aia"&&!SUN.man[mode]){ sel.value=SUN.mode; return; }
+  if(mode!=="aia"&&!SUN.man[mode]) return;
   setPlaying(false);
   const t=SUN.frames[SUN.idx]?SUN.frames[SUN.idx].t:Date.now(), meta=document.getElementById("m-sun");
   if(mode==="aia"){ SUN.frames=SUN.aia; }
@@ -1011,7 +1008,7 @@ async function switchInst(mode){
     }
     SUN.frames=SUN.sets[mode];
   }
-  SUN.mode=mode; sel.value=mode;
+  SUN.mode=mode; setPressed(mode);
   document.getElementById("tag-sun").textContent=mode==="aia"?"SDO/AIA 193 Å":VIEWS[mode].tag;
   meta.textContent=mode==="aia"?(SUN.metaAia||""):VIEWS[mode].text;
   document.getElementById("chbtn").hidden=!(SUN.chdata&&(mode==="aia"||mode==="hmi"));
@@ -1024,7 +1021,7 @@ async function switchInst(mode){
     document.getElementById("scrub").max=Math.max(SUN.frames.length-1,0); document.getElementById("playbtn").disabled=SUN.frames.length<2;
   });
 }
-document.getElementById("instsel").addEventListener("change",e=>switchInst(e.target.value));
+["aia","a304","a131","hmi"].forEach(k=>document.getElementById("inst-"+k).addEventListener("click",()=>switchInst(k)));
 
 function setLayer(btn,key){ SUN[key]=!SUN[key]; btn.setAttribute("aria-pressed",SUN[key]); drawOverlay(); }
 document.getElementById("chbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ch"));
