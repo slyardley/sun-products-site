@@ -136,6 +136,13 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#1a1205}
 .seg[hidden]{display:none}
+select.sel{appearance:none;-webkit-appearance:none;flex:none;max-width:60%;color-scheme:dark;background:rgba(255,255,255,.03) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e99b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center;border:1px solid var(--card-edge);border-radius:999px;color:var(--text);font:inherit;font-size:12px;font-weight:600;padding:5px 28px 5px 13px;cursor:pointer;text-overflow:ellipsis}
+select.sel:hover{border-color:var(--accent)}
+select.sel:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select.sel[hidden]{display:none}
+.xlink{margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.xlink a{color:var(--accent);text-decoration:none}
+.xlink a:hover{text-decoration:underline}
 .sunhead h2{white-space:nowrap}
 @media (max-width:480px){.seg .long{display:none}.seg button{padding:4px 9px}}
 .chips{position:absolute;left:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:3;max-width:calc(100% - 20px)}
@@ -232,10 +239,12 @@ footer a:hover{text-decoration:underline}
     <section class="card sun" id="c-sun">
       <div class="sunhead">
         <h2>The Sun <span class="rng" id="tag-sun">SDO/AIA 193 Å</span></h2>
-        <div class="seg" role="group" aria-label="Instrument" id="instgrp" hidden>
-          <button id="inst-aia" aria-pressed="true" title="Extreme ultraviolet: coronal holes are dark">AIA 193 Å</button>
-          <button id="inst-hmi" aria-pressed="false" title="Magnetic field: white points towards us, black away">Magnetogram</button>
-        </div>
+        <select class="sel" id="instsel" aria-label="Choose the view of the Sun" hidden>
+          <option value="aia">193 Å · coronal holes</option>
+          <option value="a304">304 Å · filaments</option>
+          <option value="a131">131 Å · flares</option>
+          <option value="hmi">Magnetogram</option>
+        </select>
       </div>
       <div class="stage" id="stage">
         <canvas id="suncv" width="700" height="700" role="img" aria-label="Sun in extreme ultraviolet light (AIA 193 Å)"></canvas>
@@ -275,6 +284,7 @@ footer a:hover{text-decoration:underline}
         <button class="pill" id="cnow" aria-label="Jump to the latest image">Latest</button>
       </div>
       <div class="meta" id="m-cor">A coronagraph blocks the Sun's bright disc (the white circle marks its size) so the faint outer atmosphere shows. Streamers are normal. Clouds that brighten and move outward can be coronal mass ejections (CMEs). NOAA's CCOR-2 on the SOLAR-1 spacecraft, which also provides the solar wind data above. Hourly pictures from NOAA SWPC.</div>
+      <p class="xlink">For model forecasts of CMEs and the solar wind, see <a href="https://swxforecastlab.org/forecasts.html" target="_blank" rel="noopener">HUXt</a> from the University of Reading, which uses Met Office inputs.</p>
     </section>
   </div>
 
@@ -298,6 +308,7 @@ footer a:hover{text-decoration:underline}
         <div class="chart" id="ch-prot"></div>
         <div class="oline" id="o-prot"></div>
         <div class="oline" id="o-hard"></div>
+        <p class="xlink">For aircraft radiation, see <a href="https://spaceweather.surrey.ac.uk/maire-s_nowcast.php" target="_blank" rel="noopener">MAIRE-S</a> from the University of Surrey, a live model of dose rates for aircraft that includes a UK airspace view. It is an operational test and is not for accurate dose measurements.</p>
         <div class="meta" id="m-prot"></div>
       </section>
 
@@ -373,6 +384,8 @@ footer a:hover{text-decoration:underline}
         <p>Protons accelerated by flares and CMEs can reach Earth within minutes to hours. A radiation storm (S1 or above) begins when the flux of protons above 10 MeV reaches 10 pfu (particles per cm² per second per steradian). S2 is 100, S3 is 1,000, S4 is 10,000 and S5 is 100,000. These mostly matter for satellites, astronauts and high-latitude flights, rather than for people on the ground. The S-level only looks at protons above 10 MeV. Studies of ground-level enhancements describe how hard the spectrum is with a spectral index: the slope of a power law, J(E) ∝ E<sup>−γ</sup>, fitted to the differential proton flux in the channels above about 40 MeV. A smaller γ means a harder spectrum, which can matter more for aircraft and ground-level effects than the S-level alone suggests. The value changes through an event, and is usually flattest early on. The words hard, typical and soft are a rough guide and not an agreed standard. They split at the midpoints between published averages: ground-level events average a slope of about 3.2 above 40 MeV, while event-integrated 10–100 MeV studies give about 2.7 for GLEs, 3.8 for regular large SEP events and 4.9 for filament-eruption events. So below 3.2 is called hard, and above 4.4 soft. The fit uses only channels that are clearly above their quiet-time level, so it is shown only during a significant event. NOAA issues its own alert when the ≥100 MeV flux reaches 1 pfu.</p></details>
       <details style="--c:#5aa9ff"><summary>Active regions</summary>
         <p>Active regions are the Sun's sunspot groups. NOAA gives each a number (for example AR4560) and, for groups with sunspots, a magnetic class based on how the magnetic polarities are arranged. α (alpha) is a single dominant polarity, β (beta) is a simple pair of opposite polarities, γ (gamma) is a tangled mix with no clear dividing line, and δ (delta) has opposite polarities packed inside one sunspot. Combined names such as β-γ or β-γ-δ are more complex. Simple groups (α, β) rarely produce big flares, while the more complex classes are more likely to, although most regions never produce a large flare. Regions with no spots, only bright plage, have no class. Where a region sits on the disc also matters. Flares and CMEs from regions near the centre are more likely to be aimed at Earth.</p></details>
+      <details style="--c:#ff9a2e"><summary>193, 304 and 131 Å: the different views of the Sun</summary>
+        <p>The Sun's atmosphere gives off light at different wavelengths depending on its temperature. The 193 Å view shows the corona at about a million degrees, where coronal holes look dark, and it is the one used for the outlines. The 304 Å view shows cooler gas in the chromosphere, so filaments appear as dark threads and prominences as bright loops, and an erupting filament can launch a CME. The 131 Å view picks out very hot plasma, so flares appear as brilliant patches, but it looks grainy on quiet days. Use the drop-down at the top of the Sun panel to switch between them and the magnetogram.</p></details>
       <details style="--c:#ff9a2e"><summary>The magnetogram</summary>
         <p>A magnetogram maps the Sun's magnetic field along our line of sight, measured by the HMI instrument on NASA's Solar Dynamics Observatory. White is field pointing towards us (positive) and black is field pointing away (negative), with grey where the field is weak. Active regions show up as close pairs of white and black patches. Coronal holes are regions where the field mostly points one way, which is why the outlines on the pictures are coloured pink for positive and blue for negative. The data used here arrive about an hour after they are measured.</p></details>
       <details style="--c:#ff9a2e"><summary>Coronal holes</summary>
@@ -413,6 +426,7 @@ const CONFIG = {
   fluenceMin30: 1e5, fluenceMin100: 1e4,   // minimum background-subtracted fluences (cm^-2 sr^-1, last 3 days) for that fluence ratio
   neutronUrl: "neutron.json",         // Oulu neutron monitor data from NMDB (made by the hourly job)
   lascoUrl: "lasco_frames.json",     // SOHO/LASCO C2 and C3 pictures, hourly (made by the hourly job)
+  aia304Url: "aia_frames_304.json", aia131Url: "aia_frames_131.json",   // extra AIA channels, hourly (made by the hourly job)
   hmiUrl: "hmi_frames.json",         // near-real-time HMI magnetogram pictures, every 2 hours (made by the hourly job)
   auroraUrl: "met_aurora.json",        // Met Office aurora forecast frames + text (made by the hourly job)
   coronaDir: "https://services.swpc.noaa.gov/images/animations/ccor2/",   // NOAA coronagraph frames (every 15 min)
@@ -858,7 +872,7 @@ function projectRegions(regs,t,g){
   });
   return out;
 }
-const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false,mode:"aia",aia:[],hmiSet:null,hmiOk:false};
+const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false,mode:"aia",aia:[],sets:{},man:{}};
 const cv=document.getElementById("suncv"), cx2=cv.getContext("2d"), ov=document.getElementById("sunov");
 
 const HALE={A:["α","alpha"],B:["β","beta"],G:["γ","gamma"],D:["δ","delta"]};
@@ -894,7 +908,7 @@ function drawOverlay(){
   if(!SUN.frames.length&&!SUN.fallback){ov.innerHTML="";return;}
   const kind=SUN.fallback?"aia":"hv", t=SUN.fallback?Date.now():SUN.frames[SUN.idx].t, g=sunGeom(t,kind);
   ov.setAttribute("viewBox",`0 0 ${g.size} ${g.size}`);
-  ov.innerHTML=(SUN.ch&&!SUN.fallback?chOverlay(t,g):"")+(SUN.ar?arOverlay(t,g):"");
+  ov.innerHTML=(SUN.ch&&!SUN.fallback&&(SUN.mode==="aia"||SUN.mode==="hmi")?chOverlay(t,g):"")+(SUN.ar?arOverlay(t,g):"");
 }
 function setMsg(t){const m=document.getElementById("sunmsg"); m.hidden=!t; m.textContent=t||"";}
 function paint(img){
@@ -925,7 +939,7 @@ async function preloadAll(){
   const jobs=SUN.frames.map(async f=>{ if(!f.img){ try{ f.img=await loadImg(f.url+"?v="+f.t); }catch(e){ f.img=null; } } });
   await Promise.all(jobs);
   SUN.frames=SUN.frames.filter(f=>f.img);
-  if(SUN.mode==="hmi") SUN.hmiSet=SUN.frames; else SUN.aia=SUN.frames;
+  if(SUN.mode==="aia") SUN.aia=SUN.frames; else SUN.sets[SUN.mode]=SUN.frames;
   document.getElementById("scrub").max=Math.max(SUN.frames.length-1,0);
   SUN.loadedAll=true;
   document.getElementById("playbtn").disabled=SUN.frames.length<2;
@@ -949,7 +963,7 @@ async function initSun(){
     meta.textContent="Hourly SDO/AIA 193 Å pictures from Helioviewer for the last 24 hours. Dark patches are coronal holes, the source of fast solar wind. Outlines show holes detected in the latest picture (pink = positive magnetic polarity, blue = negative), moved with the Sun's rotation for earlier frames. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one.";
     SUN.metaAia=meta.textContent;
     preloadAll().then(()=>{ if(wasPlaying) setPlaying(true); });
-    checkHmi().then(()=>{ if(keepMode==="hmi"&&SUN.hmiOk) switchInst("hmi"); });
+    checkViews().then(()=>{ if(keepMode!=="aia"&&SUN.man[keepMode]) switchInst(keepMode); });
   } else {
     // fallback: the job's frames are not there (yet), show SDO's own latest image with the regions only
     SUN.fallback=true; SUN.frames=[]; document.getElementById("loopbar").hidden=true; document.getElementById("chbtn").hidden=true;
@@ -959,47 +973,59 @@ async function initSun(){
   }
 }
 
-/* ---- AIA 193 / HMI magnetogram switch ---- */
-async function checkHmi(){
-  try{
-    const r=await fetch(CONFIG.hmiUrl+"?t="+Math.floor(Date.now()/6e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
-    const m=await r.json(); if(!m.frames||!m.frames.length) throw new Error("no frames");
-    SUN.hmiMan=m; SUN.hmiOk=true; SUN.hmiSet=null;                // reload the pictures lazily, only when someone switches to the magnetogram
-    document.getElementById("instgrp").hidden=false; document.getElementById("tag-sun").hidden=true;
-  }catch(e){ SUN.hmiOk=false; document.getElementById("instgrp").hidden=true; document.getElementById("tag-sun").hidden=false; if(SUN.mode==="hmi"){ SUN.mode="aia"; SUN.frames=SUN.aia; } }
+/* ---- Sun views: AIA 193 (default), AIA 304, AIA 131 and the HMI magnetogram ---- */
+const VIEWS={
+  a304:{url:"aia304Url",tag:"SDO/AIA 304 Å",text:"SDO/AIA 304 Å, one picture per hour for the last 24 hours. This channel shows helium in the Sun's chromosphere and the layer just above it, at roughly 50,000 degrees. Filaments, which are clouds of cooler gas held up by magnetic fields, appear as dark threads on the disc, and prominences as bright loops over the edge. When a filament erupts it can launch a coronal mass ejection (CME). Coronal hole outlines are not shown here, because holes are best seen in 193 Å. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one."},
+  a131:{url:"aia131Url",tag:"SDO/AIA 131 Å",text:"SDO/AIA 131 Å, one picture per hour for the last 24 hours. This channel picks out very hot plasma, around 10 million degrees, which is why flares show up as brilliant patches, and it also shows cooler plasma at about 400,000 degrees. On quiet days it looks grainy, and it is most useful while a flare is happening. Coronal hole outlines are not shown here, because holes are best seen in 193 Å. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one."},
+  hmi:{url:"hmiUrl",tag:"SDO/HMI magnetogram",text:"SDO/HMI line-of-sight magnetogram, one picture every two hours for the last 24 hours. White is magnetic field pointing towards us (positive), black is field pointing away (negative), grey is weak field. This near-real-time data arrives about an hour behind the AIA pictures, so the latest time is earlier. The field along the line of sight is less reliable near the edge of the disc. Outlines and circles are as for AIA."}
+};
+async function checkViews(){
+  const sel=document.getElementById("instsel"); let any=false;
+  await Promise.all(Object.keys(VIEWS).map(async k=>{
+    try{
+      const r=await fetch(CONFIG[VIEWS[k].url]+"?t="+Math.floor(Date.now()/6e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
+      const m=await r.json(); if(!m.frames||!m.frames.length) throw new Error("no frames");
+      SUN.man[k]=m; SUN.sets[k]=null;                                  // the pictures load lazily, only when someone picks that view
+    }catch(e){ SUN.man[k]=null; SUN.sets[k]=null; }
+    const opt=sel.querySelector('option[value="'+k+'"]'), ok=!!SUN.man[k]; opt.hidden=!ok; opt.disabled=!ok; any=any||ok;
+  }));
+  sel.hidden=!any; document.getElementById("tag-sun").hidden=any;
+  if(SUN.mode!=="aia"&&!SUN.man[SUN.mode]){ SUN.mode="aia"; SUN.frames=SUN.aia; }
+  sel.value=SUN.mode;
 }
 function nearestIdx(frames,t){ let b=0; frames.forEach((f,i)=>{ if(Math.abs(f.t-t)<Math.abs(frames[b].t-t)) b=i; }); return b; }
 async function switchInst(mode){
   if(SUN.fallback) return;
+  const sel=document.getElementById("instsel");
+  if(mode!=="aia"&&!SUN.man[mode]){ sel.value=SUN.mode; return; }
   setPlaying(false);
   const t=SUN.frames[SUN.idx]?SUN.frames[SUN.idx].t:Date.now(), meta=document.getElementById("m-sun");
-  if(mode==="hmi"){
-    if(!SUN.hmiOk) return;
-    if(!SUN.hmiSet){
-      setMsg("Loading the magnetogram…");
-      SUN.hmiSet=SUN.hmiMan.frames.map(f=>({t:Date.parse(f.t),url:f.f,img:null}));
-      const best=SUN.hmiSet[nearestIdx(SUN.hmiSet,t)], last=SUN.hmiSet[SUN.hmiSet.length-1];
+  if(mode==="aia"){ SUN.frames=SUN.aia; }
+  else{
+    if(!SUN.sets[mode]){
+      setMsg("Loading the picture…");
+      const set=SUN.man[mode].frames.map(f=>({t:Date.parse(f.t),url:f.f,img:null})); SUN.sets[mode]=set;
+      const best=set[nearestIdx(set,t)], last=set[set.length-1];
       for(const f of (best===last?[last]:[best,last])){ try{ f.img=await loadImg(f.url+"?v="+f.t); }catch(e){} }
       setMsg("");
     }
-    SUN.frames=SUN.hmiSet; SUN.mode="hmi";
-  } else { SUN.frames=SUN.aia; SUN.mode="aia"; }
-  document.getElementById("inst-aia").setAttribute("aria-pressed",SUN.mode==="aia");
-  document.getElementById("inst-hmi").setAttribute("aria-pressed",SUN.mode==="hmi");
-  document.getElementById("tag-sun").textContent=SUN.mode==="hmi"?"SDO/HMI magnetogram":"SDO/AIA 193 Å";
-  meta.textContent=SUN.mode==="hmi"
-    ? "SDO/HMI line-of-sight magnetogram, one picture every two hours for the last 24 hours. White is magnetic field pointing towards us (positive), black is field pointing away (negative), grey is weak field. This near-real-time data arrives about an hour behind the AIA pictures, so the latest time is earlier. The field along the line of sight is less reliable near the edge of the disc. Outlines and circles are as for AIA."
-    : (SUN.metaAia||"");
-  const i=nearestIdx(SUN.frames,t);
+    SUN.frames=SUN.sets[mode];
+  }
+  SUN.mode=mode; sel.value=mode;
+  document.getElementById("tag-sun").textContent=mode==="aia"?"SDO/AIA 193 Å":VIEWS[mode].tag;
+  meta.textContent=mode==="aia"?(SUN.metaAia||""):VIEWS[mode].text;
+  document.getElementById("chbtn").hidden=!(SUN.chdata&&(mode==="aia"||mode==="hmi"));
   document.getElementById("scrub").max=SUN.frames.length-1; document.getElementById("playbtn").disabled=true;
-  showFrame(i);
+  showFrame(nearestIdx(SUN.frames,t));
+  const keep=mode;
   Promise.all(SUN.frames.map(async f=>{ if(!f.img){ try{ f.img=await loadImg(f.url+"?v="+f.t); }catch(e){} } })).then(()=>{
-    SUN.frames=SUN.frames.filter(f=>f.img); if(SUN.mode==="hmi") SUN.hmiSet=SUN.frames; else SUN.aia=SUN.frames;
+    if(SUN.mode!==keep) return;
+    SUN.frames=SUN.frames.filter(f=>f.img); if(keep==="aia") SUN.aia=SUN.frames; else SUN.sets[keep]=SUN.frames;
     document.getElementById("scrub").max=Math.max(SUN.frames.length-1,0); document.getElementById("playbtn").disabled=SUN.frames.length<2;
   });
 }
-document.getElementById("inst-aia").addEventListener("click",()=>switchInst("aia"));
-document.getElementById("inst-hmi").addEventListener("click",()=>switchInst("hmi"));
+document.getElementById("instsel").addEventListener("change",e=>switchInst(e.target.value));
+
 function setLayer(btn,key){ SUN[key]=!SUN[key]; btn.setAttribute("aria-pressed",SUN[key]); drawOverlay(); }
 document.getElementById("chbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ch"));
 document.getElementById("arbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ar"));
