@@ -76,6 +76,7 @@ jobs:
             --frames-dir site/aia \
             --frames-prev-url https://forecast.stephyardley.com \
             --met-aurora-dir site \
+            --pfss-dir site \
             --aia-extra 304,131 \
             --aia-extra-dir site \
             --lasco-dir site \
