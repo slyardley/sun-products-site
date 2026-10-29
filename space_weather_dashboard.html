@@ -398,8 +398,6 @@ footer a:hover{text-decoration:underline}
         <p>Coronal holes are the dark patches in the AIA 193 Å image. The Sun's magnetic field is open there, so fast solar wind streams out. A hole facing Earth can send a fast stream that typically arrives a few days later. On the picture the outline colour shows the hole's magnetic polarity: pink is positive (field pointing outward) and blue is negative. Holes are labelled by where they sit on the disc.</p></details>
       <details style="--c:#8bd450"><summary>The aurora oval map</summary>
         <p>The auroral oval is the ring around the magnetic pole where aurora is most likely. It grows and moves towards the equator when geomagnetic activity rises. On the map the colour shows the forecast chance of aurora, with the ring pink on the map marking the UK. Because aurora is high up, it can sometimes be seen low on the northern horizon from further south than the band itself, in dark and clear skies. Cloud and moonlight matter as much as the forecast.</p></details>
-      <details style="--c:#b48cff"><summary>Neutron monitors and ground-level enhancements</summary>
-        <p>A neutron monitor counts the secondary particles made when cosmic rays hit the atmosphere. Most of those are galactic cosmic rays, whose count dips for hours to days after a coronal mass ejection or geomagnetic storm (a Forbush decrease). Very rarely a solar eruption accelerates protons to energies high enough to add to the count at the ground. That is a ground-level enhancement, or GLE. It builds over several minutes, shows at several stations, and is judged by experts. This chart is only a quick look at real-time data from one station, which has not been checked by a human, so a single spike can be an instrument error.</p></details>
       <details style="--c:#ff9a2e"><summary>The corona and CMEs</summary>
         <p>The corona is the Sun's outer atmosphere, which is far fainter than the Sun's disc. A coronagraph blocks the disc so the corona shows up. A coronal mass ejection (CME) appears as a cloud that brightens and moves outward over several frames. Whether it is aimed at Earth is hard to tell from one view. Forecasters combine coronagraph images with other data to judge that, and a CME that is Earth-directed usually takes a day or more to arrive. The corona panel can show NOAA's CCOR-2 or the older SOHO LASCO C2 and C3 coronagraphs. C2 looks close to the Sun, and C3 looks much further out, so a CME can be followed for longer. SOHO's pictures can be delayed because its data arrive in contacts with ground stations.</p></details>
       <details style="--c:#ff9a2e"><summary>The connectivity map</summary>
@@ -430,7 +428,7 @@ const CONFIG = {
   gammaBands: [3.2, 4.4],           // words: below the first = hard, between = typical, above the second = soft. Midpoints between published group averages (see the tooltip), not an agreed standard
   showFluenceIndex: false,          // true adds the older "F>=100 / F>=30 MeV" fluence ratio line
   fluenceMin30: 1e5, fluenceMin100: 1e4,   // minimum background-subtracted fluences (cm^-2 sr^-1, last 3 days) for that fluence ratio
-  neutronUrl: "neutron.json",         // Oulu neutron monitor data from NMDB (made by the hourly job)
+  neutronUrl: "",                    // neutron monitor panel is switched off for now; set to "neutron.json" if the hourly job is made to write it         // Oulu neutron monitor data from NMDB (made by the hourly job)
   lascoUrl: "lasco_frames.json",     // SOHO/LASCO C2 and C3 pictures, hourly (made by the hourly job)
   pfssUrl: "pfss_lines.json",       // PFSS field lines from the newest HMI map (made by the hourly job)
   aia304Url: "aia_frames_304.json", aia131Url: "aia_frames_131.json",   // extra AIA channels, hourly (made by the hourly job)
@@ -1369,6 +1367,7 @@ setInterval(()=>{ if(!document.hidden && !AUR.playing) initAurora(); }, 30*60*10
 /* ============ Neutron monitor (Oulu, via NMDB) ============ */
 async function initNeutron(){
   const card=document.getElementById("c-nm");
+  if(!CONFIG.neutronUrl){ card.hidden=true; return; }
   try{
     const r=await fetch(CONFIG.neutronUrl+"?t="+Math.floor(Date.now()/6e5),{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
     const d=await r.json(), st=d.stations&&d.stations[0]; if(!st||!st.pts||st.pts.length<20) throw new Error("no data");
