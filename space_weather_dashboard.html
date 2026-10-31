@@ -136,6 +136,12 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#1a1205}
 .seg[hidden]{display:none}
+.cyc svg{display:block;width:100%;height:auto}
+.cyc .lg{display:flex;flex-wrap:wrap;gap:6px 16px;margin:2px 0 6px;font-size:11.5px;color:var(--muted)}
+.cyc .lg i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px;border-radius:2px}
+.cyc .lg i.d{border-top-style:dashed;border-top-width:2px}
+.cyc .lg i.b{height:9px;border:0;background:rgba(90,169,255,.28);border-radius:2px;vertical-align:-1px}
+.cyc svg text{font:11px Inter,system-ui,sans-serif;fill:#8e99b8}
 .xlink{margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
 .xlink a{color:var(--accent);text-decoration:none}
 .xlink a:hover{text-decoration:underline}
@@ -370,6 +376,15 @@ footer a:hover{text-decoration:underline}
     </div>
   </div>
 
+  <section class="card cyc" id="c-cycle" style="margin-top:16px">
+    <h2>The solar cycle <span class="rng">Sunspot number</span></h2>
+    <p class="desc">The Sun's activity rises and falls over about 11 years. This is the monthly sunspot number for Solar Cycle 25, with NOAA's prediction for the years ahead.</p>
+    <div class="lg"><span><i style="border-color:#8e99b8"></i>Monthly</span><span><i style="border-color:#ff9a2e"></i>Smoothed</span><span><i class="d" style="border-color:#5aa9ff"></i>NOAA prediction</span><span><i class="b"></i>Prediction range</span></div>
+    <div id="ch-cycle" role="img" aria-label="Chart of the monthly sunspot number for Solar Cycle 25 and NOAA's prediction"><div class="msg" style="position:static;padding:30px 0;text-align:center;color:var(--muted)">Loading…</div></div>
+    <div class="meta" id="m-cycle"></div>
+    <p class="attr">Sunspot numbers: SILSO, Royal Observatory of Belgium, Brussels, via NOAA SWPC. Prediction: NOAA SWPC. The prediction is a smoothed value, so compare it with the orange line, not the monthly values. Smoothed values trail the latest month by about six months.</p>
+  </section>
+
   <section class="card faq" id="faq">
     <h2>What do these mean?</h2>
     <p class="desc">Short plain-English guides to everything on this page. Tap a heading to open it.</p>
@@ -390,6 +405,8 @@ footer a:hover{text-decoration:underline}
         <p>The Open field button shades the parts of the Sun's surface where the model's magnetic field lines reach the outer boundary instead of looping back down. That open field is what the solar wind flows out along, so these areas are the model's version of coronal holes. Pink is field pointing away from the Sun and blue is field pointing towards it. They are not expected to match the dark patches in the pictures exactly, because the model is simplified and is built from a map that is not perfectly up to date, so treat any difference as a sign of the model's limits.</p></details>
       <details style="--c:#5aa9ff"><summary>Field lines (PFSS model)</summary>
         <p>The Field lines button draws a computer model of the Sun's magnetic field over the picture. It is a potential field source surface (PFSS) model, built from the latest HMI magnetic map. It assumes there are no electric currents between the surface and an outer boundary at 2.5 solar radii, which makes it a simplified picture and not a measurement. White lines leave the Sun and come back down, so they are closed loops. Pink and blue lines reach the outer boundary and are open, so they carry the solar wind outwards, pink where the field points away from the Sun and blue where it points towards it, and only their roots are drawn. Open lines gather above coronal holes. The lines turn with the Sun, but the model is only rebuilt when a new map is made, so it can miss changes such as new regions.</p></details>
+      <details style="--c:#ffb866"><summary>Sunspot number and the solar cycle</summary>
+        <p>Sunspots are dark, slightly cooler patches where strong magnetic fields break through the Sun's surface. The sunspot number counts the spots and the groups they form, and it rises and falls over about 11 years. This is Solar Cycle 25. Its smoothed number peaked in 2024 and has been declining since. A quieter Sun usually means fewer big eruptions overall, but large flares and storms can still happen on the way down. The thin line is each month's value, which wobbles a lot. The orange line is a 13-month smoothed version, which needs six more months of data, so it always trails. NOAA's prediction is also a smoothed value, so compare it with the orange line and not with single months.</p></details>
       <details style="--c:#ff9a2e"><summary>193, 304 and 131 Å: the different views of the Sun</summary>
         <p>The Sun's atmosphere gives off light at different wavelengths depending on its temperature. The 193 Å view shows the corona at about a million degrees, where coronal holes look dark, and it is the one used for the outlines. The 304 Å view shows cooler gas in the chromosphere, so filaments appear as dark threads and prominences as bright loops, and an erupting filament can launch a CME. The 131 Å view picks out very hot plasma, so flares appear as brilliant patches, but it looks grainy on quiet days. Use the buttons at the top of the Sun panel to switch between them and the magnetogram.</p></details>
       <details style="--c:#ff9a2e"><summary>The magnetogram</summary>
@@ -445,6 +462,8 @@ const EP = {
   kp:     "/products/noaa-planetary-k-index-forecast.json",
   scales: "/products/noaa-scales.json",
   regions:"/json/solar_regions.json",
+  cycleObs:"/json/solar-cycle/observed-solar-cycle-indices.json",   // monthly sunspot numbers since 1749 (about 0.5 MB, so loaded only when the card is near the screen)
+  cyclePred:"/json/solar-cycle/predicted-solar-cycle.json",
   diff:   "/json/goes/primary/differential-protons-1-day.json",
   probs:  "/json/solar_probabilities.json",
   suvi:   "/products/animations/suvi-primary-195.json"
@@ -1407,6 +1426,56 @@ setInterval(()=>{ if(!document.hidden) initNeutron(); }, 10*60*1000);
 load();
 setInterval(()=>{ if(!document.hidden) load(); }, CONFIG.refreshSeconds*1000);
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden) load(); });
+
+/* ============ Solar cycle card (NOAA monthly sunspot numbers and prediction), loaded when it is near the screen ============ */
+const CYC={started:false,obs:null,pred:null};
+const CYCMONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function drawCycle(){
+  const box=document.getElementById("ch-cycle"); if(!CYC.obs) return;
+  const W=Math.max(300,Math.floor(box.clientWidth||900)), H=W<520?230:280, L=W<520?36:44, R=14, T=12, B=28, t0=2019, t1=2031, ymax=250;
+  const X=(y,m)=>L+(y+(m-1)/12-t0)/(t1-t0)*(W-L-R), Y=v=>T+(1-Math.min(v,ymax)/ymax)*(H-T-B), ym=r=>r["time-tag"].split("-").map(Number);
+  const O=CYC.obs, S=O.filter(r=>r.smoothed_ssn>0), P=CYC.pred;
+  const path=(rows,f)=>rows.map((r,i)=>{const [y,m]=ym(r); return (i?"L":"M")+X(y,m).toFixed(1)+" "+Y(f(r)).toFixed(1);}).join("");
+  let g=""; 
+  for(let v=0;v<=ymax;v+=50) g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#ffffff" stroke-opacity="${v?0.07:0.18}"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`;
+  for(let y=t0;y<=t1;y+=(W<520?2:1)) g+=`<line x1="${X(y,1)}" x2="${X(y,1)}" y1="${T}" y2="${H-B}" stroke="#ffffff" stroke-opacity="0.05"/><text x="${X(y,1)}" y="${H-9}" text-anchor="middle">${y}</text>`;
+  // prediction range, then the lines
+  const up=P.map(r=>{const [y,m]=ym(r); return X(y,m).toFixed(1)+" "+Y(r.high_ssn).toFixed(1);}), lo=P.slice().reverse().map(r=>{const [y,m]=ym(r); return X(y,m).toFixed(1)+" "+Y(r.low_ssn).toFixed(1);});
+  g+=`<polygon points="${up.concat(lo).join(" ")}" fill="#5aa9ff" fill-opacity="0.18"/>`;
+  g+=`<path d="${path(O,r=>r.ssn)}" fill="none" stroke="#8e99b8" stroke-width="1.2" stroke-opacity="0.85" stroke-linejoin="round"/>`;
+  g+=`<path d="${path(P,r=>r.predicted_ssn)}" fill="none" stroke="#5aa9ff" stroke-width="2" stroke-dasharray="6 4"/>`;
+  g+=`<path d="${path(S,r=>r.smoothed_ssn)}" fill="none" stroke="#ff9a2e" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`;
+  // peak of the smoothed curve and "now"
+  const pk=S.reduce((a,b)=>b.smoothed_ssn>a.smoothed_ssn?b:a), [py,pm]=ym(pk), now=new Date(), nx=X(now.getUTCFullYear(),now.getUTCMonth()+1+now.getUTCDate()/31);
+  g+=`<circle cx="${X(py,pm)}" cy="${Y(pk.smoothed_ssn)}" r="4" fill="#ff9a2e" stroke="#0b1020" stroke-width="1.5"/><text x="${X(py,pm)+8}" y="${Y(pk.smoothed_ssn)-6}" style="fill:#ffb866">Peak ${CYCMONTHS[pm-1].slice(0,3)} ${py}</text>`;
+  g+=`<line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#ffffff" stroke-opacity="0.45" stroke-dasharray="3 4"/><text x="${nx+5}" y="${T+10}" style="fill:#e8ecf8">Now</text>`;
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${g}</svg>`;
+}
+async function initCycle(){
+  if(CYC.started) return; CYC.started=true;
+  const card=document.getElementById("c-cycle");
+  try{
+    const [obs,pred]=await Promise.all([get(EP.cycleObs),get(EP.cyclePred)]);
+    CYC.obs=obs.filter(r=>r["time-tag"]>="2019-01"&&r.ssn>=0); CYC.pred=pred.filter(r=>r.predicted_ssn>=0&&r["time-tag"]>="2019-01");
+    if(CYC.obs.length<12||!CYC.pred.length) throw new Error("not enough data");
+    drawCycle();
+    const last=CYC.obs[CYC.obs.length-1], [ly,lm]=last["time-tag"].split("-").map(Number);
+    const S=CYC.obs.filter(r=>r.smoothed_ssn>0), pk=S.reduce((a,b)=>b.smoothed_ssn>a.smoothed_ssn?b:a), [py,pm]=pk["time-tag"].split("-").map(Number);
+    const sl=S[S.length-1], [sy,sm]=sl["time-tag"].split("-").map(Number);
+    const pNow=CYC.pred.find(r=>r["time-tag"]>last["time-tag"]), tagNext=pNow?`${+pNow["time-tag"].slice(0,4)+1}-${pNow["time-tag"].slice(5)}`:"", pNext=CYC.pred.find(r=>r["time-tag"]===tagNext);
+    const fmt=v=>Math.round(v);
+    let txt=`Latest month, ${CYCMONTHS[lm-1]} ${ly}: <b style="color:#ffb866">${fmt(last.ssn)}</b>. The smoothed number peaked at <b style="color:#ffb866">${fmt(pk.smoothed_ssn)}</b> in ${CYCMONTHS[pm-1]} ${py}, and the latest smoothed value is ${fmt(sl.smoothed_ssn)} (${CYCMONTHS[sm-1]} ${sy}).`;
+    if(pNow&&pNext) txt+=` NOAA predicts about ${fmt(pNow.predicted_ssn)} now and about ${fmt(pNext.predicted_ssn)} a year later.`;
+    document.getElementById("m-cycle").innerHTML=txt;
+    document.getElementById("ch-cycle").setAttribute("aria-label",`Sunspot number for Solar Cycle 25. Peak smoothed value ${fmt(pk.smoothed_ssn)} in ${CYCMONTHS[pm-1]} ${py}. Latest month ${CYCMONTHS[lm-1]} ${ly}: ${fmt(last.ssn)}.`);
+    let rt=null; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(drawCycle,150); });
+  }catch(e){ console.warn("solar cycle",e); card.hidden=true; }
+}
+(function(){
+  const card=document.getElementById("c-cycle");
+  if("IntersectionObserver" in window){ const io=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)){ io.disconnect(); initCycle(); } },{rootMargin:"800px 0px"}); io.observe(card); }
+  else setTimeout(initCycle,4000);
+})();
 </script>
 </body>
 </html>
