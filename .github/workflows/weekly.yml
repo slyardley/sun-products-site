@@ -1,7 +1,8 @@
-
-# Private weekly summary draft. Save this in the PUBLIC site repository as:  .github/workflows/weekly.yml
+# Private weekly summary draft and plots. Save this in the PUBLIC site repository as:  .github/workflows/weekly.yml
 #
-# Every Sunday morning it sends YOU a draft summary of the past seven days on Telegram, for you to edit and post on Substack.
+# Every Sunday morning it sends YOU a draft summary of the past seven days on Telegram, followed by the week's plots
+# (X-ray flares, energetic particles, Kp and solar wind) as image files, for you to edit and post on Substack.
+# You can also run it at any time from the Actions tab to get the latest week.
 # Nothing is ever posted publicly. Needs the same secrets as the alerts: CODE_TOKEN, TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.
 name: Weekly summary draft
 
@@ -16,7 +17,7 @@ permissions:
 jobs:
   weekly:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Fetch the private code
         uses: actions/checkout@v4
@@ -31,10 +32,10 @@ jobs:
           python-version: "3.12"
 
       - name: Install
-        run: pip install requests
+        run: pip install requests matplotlib numpy
 
-      - name: Build and send the draft
+      - name: Build and send the draft and the plots
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python code/space_alerts.py --weekly
+        run: python code/space_alerts.py --weekly --plots
