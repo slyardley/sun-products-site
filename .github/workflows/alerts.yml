@@ -1,0 +1,69 @@
+# Private space weather alerts. Save this in the PUBLIC site repository as:  .github/workflows/alerts.yml
+#
+# Every 10 minutes it checks NOAA and, if something crossed one of your thresholds, sends YOU a Telegram message.
+# Nothing is ever posted publicly. The script itself lives in your private repository and is fetched for each run.
+# Needs three secrets in this repository: CODE_TOKEN (already there), TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.
+name: Space alerts
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"        # GitHub can run these a few minutes late
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "Send a test message to Telegram"
+        type: boolean
+        default: false
+
+concurrency:
+  group: space-alerts
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch the private code
+        uses: actions/checkout@v4
+        with:
+          repository: slyardley/sun-products
+          token: ${{ secrets.CODE_TOKEN }}
+          path: code
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install requests
+
+      - name: Remember what has already been sent
+        uses: actions/cache/restore@v4
+        with:
+          path: alert_state.json
+          key: alert-state-none
+          restore-keys: alert-state-
+
+      - name: Check NOAA
+        id: check
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          EXTRA: ${{ inputs.test && '--test' || '' }}
+        run: |
+          before=$(sha256sum alert_state.json 2>/dev/null | cut -d' ' -f1 || true)
+          python code/space_alerts.py --alerts $EXTRA
+          after=$(sha256sum alert_state.json | cut -d' ' -f1)
+          if [ "$before" != "$after" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"; else echo "changed=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Save what has been sent
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: alert_state.json
+          key: alert-state-${{ github.run_id }}-${{ github.run_attempt }}
