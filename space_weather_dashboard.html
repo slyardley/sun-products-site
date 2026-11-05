@@ -149,6 +149,8 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .seg .short{display:none}
 @media (max-width:480px){.seg .long{display:none}.seg .short{display:inline}.seg button{padding:4px 9px}}
 .stage #openov{pointer-events:none;image-rendering:auto}
+.srcsw{position:absolute;left:10px;top:10px;z-index:3;background:rgba(8,12,24,.74)}
+.srcsw button{font-size:11.5px;padding:3px 10px}
 .chips{position:absolute;left:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:3;max-width:calc(100% - 20px)}
 .chips .pill{padding:3px 10px;font-size:11.5px;background:rgba(8,12,24,.74);border-color:rgba(255,255,255,.16)}
 .chips .pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1a1205}
@@ -256,6 +258,10 @@ footer a:hover{text-decoration:underline}
         <canvas id="openov" width="350" height="350" aria-hidden="true"></canvas>
         <svg id="sunov" viewBox="0 0 700 700" aria-hidden="true"></svg>
         <div class="msg" id="sunmsg" hidden></div>
+        <div class="seg srcsw" role="group" aria-label="Where the picture comes from" id="srcgrp" hidden>
+          <button id="src-sdo" aria-pressed="true" title="SDO: the best quality, refreshed about every hour">SDO</button>
+          <button id="src-goes" aria-pressed="false" title="GOES-19 SUVI: live from NOAA, about 25 minutes behind">Live</button>
+        </div>
         <div class="chips" role="group" aria-label="Layers">
           <button class="pill" id="chbtn" aria-pressed="true" title="Show coronal hole outlines">Coronal holes</button>
           <button class="pill" id="arbtn" aria-pressed="true" title="Show NOAA numbered active regions">Active regions</button>
@@ -407,6 +413,8 @@ footer a:hover{text-decoration:underline}
         <p>The Field lines button draws a computer model of the Sun's magnetic field over the picture. It is a potential field source surface (PFSS) model, built from the latest HMI magnetic map. It assumes there are no electric currents between the surface and an outer boundary at 2.5 solar radii, which makes it a simplified picture and not a measurement. White lines leave the Sun and come back down, so they are closed loops. Pink and blue lines reach the outer boundary and are open, so they carry the solar wind outwards, pink where the field points away from the Sun and blue where it points towards it, and only their roots are drawn. Open lines gather above coronal holes. The lines turn with the Sun, but the model is only rebuilt when a new map is made, so it can miss changes such as new regions.</p></details>
       <details style="--c:#ffb866"><summary>Sunspot number and the solar cycle</summary>
         <p>Sunspots are dark, slightly cooler patches where strong magnetic fields break through the Sun's surface. The sunspot number counts the spots and the groups they form, and it rises and falls over about 11 years. This is Solar Cycle 25. Its smoothed number peaked in 2024 and has been declining since. A quieter Sun usually means fewer big eruptions overall, but large flares and storms can still happen on the way down. The thin line is each month's value, which wobbles a lot. The orange line is a 13-month smoothed version, which needs six more months of data, so it always trails. NOAA's prediction is also a smoothed value, so compare it with the orange line and not with single months.</p></details>
+      <details style="--c:#ff9a2e"><summary>SDO or Live (GOES) pictures</summary>
+        <p>The SDO pictures are the best quality. They are rebuilt about every hour from NASA's Solar Dynamics Observatory, so they can be an hour or more old. The Live button shows pictures from NOAA's GOES-19 SUVI telescope instead. These arrive straight from NOAA about every 4 minutes and are usually less than half an hour old, which makes them good while something is happening. They are lower resolution than SDO. 195 Å on the live side is close to 193 Å on SDO. The live side has no magnetogram, because SUVI only takes ultraviolet pictures.</p></details>
       <details style="--c:#ff9a2e"><summary>193, 304 and 131 Å: the different views of the Sun</summary>
         <p>The Sun's atmosphere gives off light at different wavelengths depending on its temperature. The 193 Å view shows the corona at about a million degrees, where coronal holes look dark, and it is the one used for the outlines. The 304 Å view shows cooler gas in the chromosphere, so filaments appear as dark threads and prominences as bright loops, and an erupting filament can launch a CME. The 131 Å view picks out very hot plasma, so flares appear as brilliant patches, but it looks grainy on quiet days. Use the buttons at the top of the Sun panel to switch between them and the magnetogram.</p></details>
       <details style="--c:#ff9a2e"><summary>The magnetogram</summary>
@@ -896,7 +904,7 @@ function projectRegions(regs,t,g){
   });
   return out;
 }
-const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false,mode:"aia",aia:[],sets:{},man:{},pf:false,of:false,pfss:null};
+const SUN={frames:[],idx:0,timer:null,playing:false,ar:true,ch:true,chdata:null,fallback:false,loadedAll:false,mode:"aia",src:"sdo",suviOk:false,aia:[],sets:{},man:{},pf:false,of:false,pfss:null};
 const cv=document.getElementById("suncv"), cx2=cv.getContext("2d"), ov=document.getElementById("sunov");
 
 const HALE={A:["α","alpha"],B:["β","beta"],G:["γ","gamma"],D:["δ","delta"]};
@@ -1004,19 +1012,22 @@ function drawOverlay(){
   const kind=SUN.fallback?"aia":"hv", t=SUN.fallback?Date.now():SUN.frames[SUN.idx].t, g=sunGeom(t,kind);
   ov.setAttribute("viewBox",`0 0 ${g.size} ${g.size}`);
   drawOpen(t,g);
-  ov.innerHTML=(SUN.pf&&!SUN.fallback?pfssOverlay(t,g):"")+(SUN.of&&!SUN.pf&&SUN.pfss&&SUN.pfss.open&&!SUN.fallback?legendOpen(g):"")+(SUN.ch&&!SUN.fallback&&SUN.mode==="aia"?chOverlay(t,g):"")+(SUN.ar?arOverlay(t,g):"");
+  ov.innerHTML=(SUN.pf&&!SUN.fallback?pfssOverlay(t,g):"")+(SUN.of&&!SUN.pf&&SUN.pfss&&SUN.pfss.open&&!SUN.fallback?legendOpen(g):"")+(SUN.ch&&!SUN.fallback&&(SUN.mode==="aia"||SUN.mode==="s195")?chOverlay(t,g):"")+(SUN.ar?arOverlay(t,g):"");
 }
 function setMsg(t){const m=document.getElementById("sunmsg"); m.hidden=!t; m.textContent=t||"";}
 function paint(img){
-  if(cv.width!==img.naturalWidth){cv.width=img.naturalWidth; cv.height=img.naturalHeight;}
+  const w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+  if(cv.width!==w){cv.width=w; cv.height=h;}
   cx2.drawImage(img,0,0,cv.width,cv.height);
 }
 function loadImg(src){return new Promise((res,rej)=>{const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error("image failed")); im.src=src;});}
 function showFrame(i){
   SUN.idx=i; const f=SUN.frames[i];
   if(f.img) paint(f.img);
+  else if(SUN.src==="goes") loadSuvi(f).then(()=>{ if(SUN.frames[SUN.idx]===f) paint(f.img); }).catch(()=>{});          // a live picture that has not been fetched yet
   document.getElementById("scrub").value=i;
-  document.getElementById("looptime").textContent=dayLbl(f.t)+" "+hhmm(f.t)+" UTC"+(i===SUN.frames.length-1?" · latest":"");
+  const ageTxt=(SUN.src==="goes"&&i===SUN.frames.length-1)?` (${Math.max(0,Math.round((Date.now()-f.t)/6e4))} min ago)`:"";
+  document.getElementById("looptime").textContent=dayLbl(f.t)+" "+hhmm(f.t)+" UTC"+(i===SUN.frames.length-1?" · latest"+ageTxt:"");
   drawOverlay();
 }
 function stepLoop(){
@@ -1027,8 +1038,18 @@ function stepLoop(){
 }
 function setPlaying(on){
   SUN.playing=on; clearTimeout(SUN.timer);
-  const b=document.getElementById("playbtn"); b.textContent=on?"❚❚ Pause":"▶ Play last 24 h";
-  if(on){ if(SUN.idx>=SUN.frames.length-1) showFrame(0); SUN.timer=setTimeout(stepLoop,150); }
+  const b=document.getElementById("playbtn"); b.textContent=on?"❚❚ Pause":(SUN.src==="goes"?"▶ Play last 2 h":"▶ Play last 24 h");
+  if(on){
+    if(SUN.src==="goes"&&SUN.frames.some(f=>!f.img)){          // the live pictures are large, so the loop is fetched only when someone presses play
+      b.textContent="Loading…"; b.disabled=true;
+      Promise.all(SUN.frames.map(async f=>{ if(!f.img){ try{ await loadSuvi(f); }catch(e){} } })).then(()=>{
+        SUN.frames=SUN.frames.filter(f=>f.img); document.getElementById("scrub").max=Math.max(SUN.frames.length-1,0); b.disabled=false;
+        if(SUN.src==="goes"&&SUN.playing){ showFrame(0); b.textContent="❚❚ Pause"; SUN.timer=setTimeout(stepLoop,150); }
+      });
+      return;
+    }
+    if(SUN.idx>=SUN.frames.length-1) showFrame(0); SUN.timer=setTimeout(stepLoop,150);
+  }
 }
 async function preloadAll(){
   // latest frame is already showing; fetch the rest in the background so the loop plays without gaps
@@ -1089,7 +1110,7 @@ async function checkViews(){
   if(SUN.mode!=="aia"&&!SUN.man[SUN.mode]){ SUN.mode="aia"; SUN.frames=SUN.aia; }
   setPressed(SUN.mode);
 }
-function setPressed(mode){ ["aia","a304","a131","hmi"].forEach(k=>document.getElementById("inst-"+k).setAttribute("aria-pressed",k===mode)); }
+function setPressed(mode){ const m=({s195:"aia",s304:"a304",s131:"a131"})[mode]||mode; ["aia","a304","a131","hmi"].forEach(k=>document.getElementById("inst-"+k).setAttribute("aria-pressed",k===m)); }
 function nearestIdx(frames,t){ let b=0; frames.forEach((f,i)=>{ if(Math.abs(f.t-t)<Math.abs(frames[b].t-t)) b=i; }); return b; }
 async function switchInst(mode){
   if(SUN.fallback) return;
@@ -1120,8 +1141,87 @@ async function switchInst(mode){
     document.getElementById("scrub").max=Math.max(SUN.frames.length-1,0); document.getElementById("playbtn").disabled=SUN.frames.length<2;
   });
 }
-["aia","a304","a131","hmi"].forEach(k=>document.getElementById("inst-"+k).addEventListener("click",()=>switchInst(k)));
+["aia","a304","a131","hmi"].forEach(k=>document.getElementById("inst-"+k).addEventListener("click",()=>{ if(SUN.src==="goes"){ if(k!=="hmi") switchLive(SUVI.toLive[k]); } else switchInst(k); }));
 
+
+/* ---- Live pictures from NOAA's GOES SUVI (loaded straight from NOAA, so they do not depend on the hourly build) ---- */
+const SUVI={base:"https://services.swpc.noaa.gov/images/animations/suvi/primary/",scale:0.730,dx:-2,dy:0,   // placed onto the same 700 pixel grid as the AIA pictures (checked against AIA)
+  chan:{s195:"195",s304:"304",s131:"131"}, toLive:{aia:"s195",a304:"s304",a131:"s131",hmi:"s195"}, toSdo:{s195:"aia",s304:"a304",s131:"a131"}};
+const LIVE_TEXT={
+  s195:"GOES-19 SUVI 195 Å, live from NOAA. A new picture arrives about every 4 minutes, and the loop shows the last two hours. 195 Å is close to AIA's 193 Å, so coronal holes look dark. SUVI has lower resolution than SDO/AIA and its pictures are composites. Coronal hole outlines come from the latest SDO-based detection. Orange circles are NOAA numbered active regions, labelled with their magnetic class (α, β, γ or δ) where NOAA lists one.",
+  s304:"GOES-19 SUVI 304 Å, live from NOAA. A new picture arrives about every 4 minutes, and the loop shows the last two hours. This channel shows helium at roughly 50,000 degrees: filaments appear as dark threads, prominences as bright loops over the edge, and flares can brighten here too. Coronal hole outlines are not shown, because holes are best seen at 195 Å. Orange circles are NOAA numbered active regions, labelled with their magnetic class where NOAA lists one.",
+  s131:"GOES-19 SUVI 131 Å, live from NOAA. A new picture arrives about every 4 minutes, and the loop shows the last two hours. This channel picks out very hot plasma, around 10 million degrees, so flares appear as brilliant patches. It looks grainy on quiet days. Coronal hole outlines are not shown, because holes are best seen at 195 Å. Orange circles are NOAA numbered active regions, labelled with their magnetic class where NOAA lists one."
+};
+function suviCanvas(img){
+  const c=document.createElement("canvas"); c.width=c.height=700; const x=c.getContext("2d"); x.fillStyle="#000"; x.fillRect(0,0,700,700);
+  const w=img.naturalWidth*SUVI.scale, off=(700-w)/2; x.drawImage(img,off+SUVI.dx,off+SUVI.dy,w,w);      // the text label at the bottom of NOAA's picture falls outside this window
+  return c;
+}
+async function loadSuvi(f){ const im=await loadImg(f.url); f.img=suviCanvas(im); return f.img; }
+async function suviList(chan){
+  const r=await fetch(SUVI.base+chan+"/",{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
+  const t=await r.text(), out=[], re=/href="(or_suvi-l2-ci\d+_g\d+_s(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)(\d\d)Z_e[^"]+\.png)"/g; let m;
+  while((m=re.exec(t))) out.push({t:Date.UTC(+m[2],+m[3]-1,+m[4],+m[5],+m[6],+m[7])+2*6e4, url:SUVI.base+chan+"/"+m[1], img:null});    // +2 minutes: the middle of the exposure
+  out.sort((a,b)=>a.t-b.t); return out;
+}
+async function buildLiveSet(mode,keep){
+  const list=await suviList(SUVI.chan[mode]); if(!list.length) throw new Error("no pictures");
+  const newest=list[list.length-1], pick=new Map();
+  for(let k=0;k<=6;k++){ const tt=newest.t-k*20*6e4; let b=list[0]; list.forEach(x=>{ if(Math.abs(x.t-tt)<Math.abs(b.t-tt)) b=x; }); pick.set(b.url,b); }
+  const set=[...pick.values()].sort((a,b)=>a.t-b.t);
+  if(keep) set.forEach(f=>{ const o=keep.find(q=>q.url===f.url); if(o&&o.img) f.img=o.img; });            // keep pictures that are already loaded
+  return set;
+}
+async function checkSuvi(){
+  try{ const l=await suviList("195"); SUN.suviOk=l.length>0; }catch(e){ SUN.suviOk=false; }
+  document.getElementById("srcgrp").hidden=!SUN.suviOk;
+}
+function relabel(){
+  const g=SUN.src==="goes";
+  document.getElementById("inst-aia").innerHTML=(g?"195":"193")+'<span class="long"> Å</span>';
+  document.getElementById("inst-aia").title=g?"195 Å: the corona, where coronal holes look dark":"193 Å: the corona, where coronal holes look dark";
+  document.getElementById("src-sdo").setAttribute("aria-pressed",!g); document.getElementById("src-goes").setAttribute("aria-pressed",g);
+  if(g){ ["a304","a131"].forEach(k=>document.getElementById("inst-"+k).hidden=false); document.getElementById("inst-hmi").hidden=true; }
+  else { ["a304","a131","hmi"].forEach(k=>document.getElementById("inst-"+k).hidden=!SUN.man[k]); }
+}
+async function switchLive(mode){
+  setPlaying(false);
+  const meta=document.getElementById("m-sun");
+  setMsg("Loading the live picture…");
+  try{
+    const set=await buildLiveSet(mode,SUN.sets[mode]); SUN.sets[mode]=set;
+    const last=set[set.length-1]; if(!last.img) await loadSuvi(last);
+    SUN.frames=set; SUN.mode=mode; setPressed(mode); relabel();
+    meta.textContent=LIVE_TEXT[mode];
+    document.getElementById("chbtn").hidden=!(SUN.chdata&&mode==="s195");
+    document.getElementById("loopbar").hidden=false; document.getElementById("scrub").max=set.length-1; document.getElementById("playbtn").disabled=set.length<2; setPlaying(false);
+    showFrame(set.length-1); setMsg("");
+  }catch(e){ console.warn("live picture",e); setMsg("The live GOES picture isn't available right now. Try SDO, or check again in a few minutes."); setTimeout(()=>setMsg(""),6000); }
+}
+async function setSource(src){
+  if(src===SUN.src) return;
+  const cur=SUN.mode;
+  SUN.src=src; relabel();
+  if(src==="goes"){ await switchLive(SUVI.toLive[cur]||"s195"); }
+  else{
+    setPlaying(false); await initSun();                                           // reload the SDO pictures, then go back to the same channel
+    const target=SUVI.toSdo[cur]||"aia"; if(target!=="aia"&&SUN.man[target]) await switchInst(target);
+    relabel(); setPlaying(false);
+  }
+}
+async function refreshLive(){
+  if(SUN.src!=="goes"||SUN.playing||document.hidden) return;
+  try{
+    const mode=SUN.mode, atLatest=SUN.idx>=SUN.frames.length-1, set=await buildLiveSet(mode,SUN.sets[mode]);
+    if(set[set.length-1].url===SUN.frames[SUN.frames.length-1].url){ document.getElementById("looptime").textContent=document.getElementById("looptime").textContent.replace(/\(\d+ min ago\)/,`(${Math.max(0,Math.round((Date.now()-SUN.frames[SUN.frames.length-1].t)/6e4))} min ago)`); return; }
+    const last=set[set.length-1]; if(!last.img) await loadSuvi(last);
+    SUN.sets[mode]=set; SUN.frames=set; document.getElementById("scrub").max=set.length-1;
+    if(atLatest) showFrame(set.length-1);
+  }catch(e){ /* keep what is on the screen */ }
+}
+document.getElementById("src-sdo").addEventListener("click",()=>setSource("sdo"));
+document.getElementById("src-goes").addEventListener("click",()=>setSource("goes"));
+checkSuvi(); setInterval(refreshLive,4*60*1000);
 function setLayer(btn,key){ SUN[key]=!SUN[key]; btn.setAttribute("aria-pressed",SUN[key]); drawOverlay(); }
 document.getElementById("chbtn").addEventListener("click",e=>setLayer(e.currentTarget,"ch"));
 document.getElementById("pfssbtn").addEventListener("click",e=>setLayer(e.currentTarget,"pf"));
@@ -1132,7 +1232,7 @@ document.getElementById("playbtn").addEventListener("click",()=>setPlaying(!SUN.
 document.getElementById("nowbtn").addEventListener("click",()=>{ setPlaying(false); showFrame(SUN.frames.length-1); });
 document.getElementById("scrub").addEventListener("input",e=>{ setPlaying(false); showFrame(+e.target.value); });
 initSun();
-setInterval(()=>{ if(!document.hidden && !SUN.playing) initSun(); }, 30*60*1000);
+setInterval(()=>{ if(!document.hidden && !SUN.playing && SUN.src!=="goes") initSun(); }, 30*60*1000);
 
 /* ============ Corona panel: NOAA CCOR-2, hourly frames for the last 24 h ============ */
 const COR={frames:[],idx:0,timer:null,playing:false,src:"ccor2",sets:{ccor2:[],c2:null,c3:null},lasco:null,lascoOk:false,metaCcor:null};
