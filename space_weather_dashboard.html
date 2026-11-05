@@ -260,7 +260,7 @@ footer a:hover{text-decoration:underline}
         <div class="msg" id="sunmsg" hidden></div>
         <div class="seg srcsw" role="group" aria-label="Where the picture comes from" id="srcgrp" hidden>
           <button id="src-sdo" aria-pressed="true" title="SDO: the best quality, refreshed about every hour">SDO</button>
-          <button id="src-goes" aria-pressed="false" title="GOES-19 SUVI: live from NOAA, about 25 minutes behind">Live</button>
+          <button id="src-goes" aria-pressed="false" title="GOES-19 SUVI: live from NOAA, usually under 30 minutes old">GOES<span class="long"> SUVI</span></button>
         </div>
         <div class="chips" role="group" aria-label="Layers">
           <button class="pill" id="chbtn" aria-pressed="true" title="Show coronal hole outlines">Coronal holes</button>
@@ -413,8 +413,8 @@ footer a:hover{text-decoration:underline}
         <p>The Field lines button draws a computer model of the Sun's magnetic field over the picture. It is a potential field source surface (PFSS) model, built from the latest HMI magnetic map. It assumes there are no electric currents between the surface and an outer boundary at 2.5 solar radii, which makes it a simplified picture and not a measurement. White lines leave the Sun and come back down, so they are closed loops. Pink and blue lines reach the outer boundary and are open, so they carry the solar wind outwards, pink where the field points away from the Sun and blue where it points towards it, and only their roots are drawn. Open lines gather above coronal holes. The lines turn with the Sun, but the model is only rebuilt when a new map is made, so it can miss changes such as new regions.</p></details>
       <details style="--c:#ffb866"><summary>Sunspot number and the solar cycle</summary>
         <p>Sunspots are dark, slightly cooler patches where strong magnetic fields break through the Sun's surface. The sunspot number counts the spots and the groups they form, and it rises and falls over about 11 years. This is Solar Cycle 25. Its smoothed number peaked in 2024 and has been declining since. A quieter Sun usually means fewer big eruptions overall, but large flares and storms can still happen on the way down. The thin line is each month's value, which wobbles a lot. The orange line is a 13-month smoothed version, which needs six more months of data, so it always trails. NOAA's prediction is also a smoothed value, so compare it with the orange line and not with single months.</p></details>
-      <details style="--c:#ff9a2e"><summary>SDO or Live (GOES) pictures</summary>
-        <p>The SDO pictures are the best quality. They are rebuilt about every hour from NASA's Solar Dynamics Observatory, so they can be an hour or more old. The Live button shows pictures from NOAA's GOES-19 SUVI telescope instead. These arrive straight from NOAA about every 4 minutes and are usually less than half an hour old, which makes them good while something is happening. They are lower resolution than SDO. 195 Å on the live side is close to 193 Å on SDO. The live side has no magnetogram, because SUVI only takes ultraviolet pictures.</p></details>
+      <details style="--c:#ff9a2e"><summary>SDO or GOES SUVI pictures</summary>
+        <p>The SDO pictures are the best quality. They are rebuilt about every hour from NASA's Solar Dynamics Observatory, so they can be an hour or more old. The GOES SUVI button shows pictures from NOAA's GOES-19 SUVI telescope instead. These arrive straight from NOAA about every 4 minutes and are usually less than half an hour old, which makes them good while something is happening. They are lower resolution than SDO. 195 Å on the GOES side is close to 193 Å on SDO. The GOES side has no magnetogram, because SUVI only takes ultraviolet pictures.</p></details>
       <details style="--c:#ff9a2e"><summary>193, 304 and 131 Å: the different views of the Sun</summary>
         <p>The Sun's atmosphere gives off light at different wavelengths depending on its temperature. The 193 Å view shows the corona at about a million degrees, where coronal holes look dark, and it is the one used for the outlines. The 304 Å view shows cooler gas in the chromosphere, so filaments appear as dark threads and prominences as bright loops, and an erupting filament can launch a CME. The 131 Å view picks out very hot plasma, so flares appear as brilliant patches, but it looks grainy on quiet days. Use the buttons at the top of the Sun panel to switch between them and the magnetogram.</p></details>
       <details style="--c:#ff9a2e"><summary>The magnetogram</summary>
@@ -1187,7 +1187,7 @@ function relabel(){
 async function switchLive(mode){
   setPlaying(false);
   const meta=document.getElementById("m-sun");
-  setMsg("Loading the live picture…");
+  setMsg("Loading the GOES picture…");
   try{
     const set=await buildLiveSet(mode,SUN.sets[mode]); SUN.sets[mode]=set;
     const last=set[set.length-1]; if(!last.img) await loadSuvi(last);
@@ -1196,7 +1196,7 @@ async function switchLive(mode){
     document.getElementById("chbtn").hidden=!(SUN.chdata&&mode==="s195");
     document.getElementById("loopbar").hidden=false; document.getElementById("scrub").max=set.length-1; document.getElementById("playbtn").disabled=set.length<2; setPlaying(false);
     showFrame(set.length-1); setMsg("");
-  }catch(e){ console.warn("live picture",e); setMsg("The live GOES picture isn't available right now. Try SDO, or check again in a few minutes."); setTimeout(()=>setMsg(""),6000); }
+  }catch(e){ console.warn("live picture",e); setMsg("The GOES SUVI picture isn't available right now. Try SDO, or check again in a few minutes."); setTimeout(()=>setMsg(""),6000); }
 }
 async function setSource(src){
   if(src===SUN.src) return;
