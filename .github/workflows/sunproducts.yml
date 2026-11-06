@@ -26,7 +26,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20            # normal runs take 3 to 7 minutes; if something stalls, stop it so the next hourly run can go
+    timeout-minutes: 22            # normal runs take 4 to 9 minutes; if something stalls, stop it so the next run can go
     steps:
       - uses: actions/checkout@v4
 
@@ -62,9 +62,11 @@ jobs:
         run: sudo apt-get install -y --no-install-recommends libopenjp2-7 || (sudo apt-get update && sudo apt-get install -y --no-install-recommends libopenjp2-7)
 
       - name: Python packages
+        timeout-minutes: 6
         run: pip install -r code/requirements.txt
 
       - name: Build site
+        timeout-minutes: 11
         run: |
           mkdir -p site
           cp space_weather_dashboard.html site/index.html
@@ -84,6 +86,24 @@ jobs:
             --hmi-dir site \
             --out site/earth_connectivity_now.png
           ls -la site
+
+      # The connectivity FORECAST (the Forecast button): driven by NOAA's WSA-Enlil predicted wind speed, about 1.5 minutes of work.
+      # If this run cannot make a new picture, the previous one stays on the site, so the button keeps working.
+      - name: Connectivity forecast
+        timeout-minutes: 8
+        continue-on-error: true
+        run: |
+          curl -sf --max-time 60 https://forecast.stephyardley.com/connectivity_forecast.png -o site/connectivity_forecast.png || true
+          curl -sf --max-time 60 https://forecast.stephyardley.com/connectivity_forecast.json -o site/connectivity_forecast.json || true
+          [ -s site/connectivity_forecast.png ] || rm -f site/connectivity_forecast.png
+          [ -s site/connectivity_forecast.json ] || rm -f site/connectivity_forecast.json
+          if python code/connectivity_forecast.py --no-url --out forecast_new.png --json forecast_new.json; then
+            mv forecast_new.png site/connectivity_forecast.png
+            mv forecast_new.json site/connectivity_forecast.json
+          else
+            echo "forecast skipped; keeping the previous picture if there is one"
+          fi
+          ls -la site/connectivity_forecast.* || true
 
       - uses: actions/configure-pages@v5
 
