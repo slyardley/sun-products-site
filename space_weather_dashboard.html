@@ -128,6 +128,8 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .hero{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:start}
 .hero .card{min-width:0}
 @media (max-width:860px){.hero{grid-template-columns:1fr}}
+.connhead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;margin-bottom:2px}
+.connhead h2{margin:0}
 .sunhead{display:flex;flex-wrap:nowrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:10px}
 .sunhead h2{justify-content:flex-start;min-width:0}
 .seg{display:inline-flex;flex-wrap:nowrap;flex:none;gap:2px;padding:2px;border:1px solid var(--card-edge);border-radius:999px;background:rgba(255,255,255,.03)}
@@ -347,10 +349,14 @@ footer a:hover{text-decoration:underline}
     </section>
     </div>
     <div class="col">
-    <section class="card conn">
-        <h2>Earth Solar Wind Connectivity</h2>
-        <p class="desc">Where the solar wind reaching Earth most likely left the Sun, from tracing the magnetic field back from L1.</p>
-        <img id="connimg" alt="Earth solar wind connectivity map" src="earth_connectivity_now.png">
+    <section class="card conn" id="c-conn">
+        <div class="connhead"><h2>Earth Solar Wind Connectivity</h2>
+          <div class="seg" id="connsw" role="group" aria-label="Forecast or now" hidden>
+            <button id="conn-fc" aria-pressed="true" title="Predicted for the next three days (experimental)">Forecast</button>
+            <button id="conn-now" aria-pressed="false" title="Where Earth is connected now">Now</button>
+          </div></div>
+        <p class="desc" id="conndesc">Where the solar wind reaching Earth most likely left the Sun, from tracing the magnetic field back from L1.</p>
+        <img id="connimg" alt="Earth solar wind connectivity map">
         <div class="empty" id="connempty" hidden>Add <b>earth_connectivity_now.png</b> next to this page to show the latest connectivity slide.</div>
       </section>
 
@@ -427,6 +433,8 @@ footer a:hover{text-decoration:underline}
         <p>The corona is the Sun's outer atmosphere, which is far fainter than the Sun's disc. A coronagraph blocks the disc so the corona shows up. A coronal mass ejection (CME) appears as a cloud that brightens and moves outward over several frames. Whether it is aimed at Earth is hard to tell from one view. Forecasters combine coronagraph images with other data to judge that, and a CME that is Earth-directed usually takes a day or more to arrive. The corona panel can show NOAA's CCOR-2 or the older SOHO LASCO C2 and C3 coronagraphs. C2 looks close to the Sun, and C3 looks much further out, so a CME can be followed for longer. SOHO's pictures can be delayed because its data arrive in contacts with ground stations.</p></details>
       <details style="--c:#ff9a2e"><summary>The connectivity map</summary>
         <p>It shows where on the Sun the solar wind reaching Earth most likely came from. The wind measured at L1 is traced back along the Sun's magnetic field using a computer model. The white outlines mark where most of the traced field lines land, and the confidence label is a rough guide to how tightly they cluster. It is a research-style estimate, not a measurement, so treat it with care.</p></details>
+      <details style="--c:#ff9a2e"><summary>Connectivity: Now or Forecast</summary>
+        <p>Now uses the solar wind speed measured at L1. Forecast uses the speed that NOAA's WSA-Enlil model predicts for Earth over the next three days. For each future time it works out when that wind left the Sun and traces the magnetic field from there, so it shows where Earth's connection is expected to move. The coloured dots go from now (dark) to three days ahead (yellow), the faint dots show the effect of the speed uncertainty, and the strip underneath shows whether the field at the predicted footpoint points away from (+) or toward (−) the Sun. It assumes the Sun's magnetic field stays as it is today and that the wind keeps a constant speed on the way, and Enlil's recent errors are shown on the picture. It is experimental, so treat it as a guide and not a prediction to rely on.</p></details>
       <details style="--c:#ff9a2e"><summary>What is L1?</summary>
         <p>L1 is a point about 1.5 million km from Earth towards the Sun, where spacecraft measure the solar wind before it reaches us. At typical speeds that gives roughly an hour of warning, which is why the numbers at the top are a nowcast and not a forecast.</p></details>
     </div>
@@ -872,8 +880,38 @@ document.querySelectorAll("button[data-h]").forEach(b=>b.addEventListener("click
   renderAll();
 }));
 const img=document.getElementById("connimg");
-img.src=CONFIG.connectivityImage;
-img.addEventListener("error",()=>{img.hidden=true;document.getElementById("connempty").hidden=false;});
+img.addEventListener("error",()=>{
+  if(CONN.mode==="fc"){ CONN.fcOk=false; document.getElementById("connsw").hidden=true; setConn("now"); return; }     // no forecast picture: fall back to Now
+  img.hidden=true; document.getElementById("connempty").hidden=false;
+});
+/* ---- Now | Forecast: the forecast picture is made by the hourly build from NOAA's WSA-Enlil wind speed forecast ---- */
+const CONN={mode:"now",fcOk:false,FC:"connectivity_forecast.png",FCJ:"connectivity_forecast.json",MAX_AGE_H:9};
+const CONN_DESC={
+  now:"Where the solar wind reaching Earth most likely left the Sun, from tracing the magnetic field back from L1.",
+  fc:"Where Earth's magnetic connection to the Sun is predicted to move over the next three days. It is driven by NOAA's WSA-Enlil wind speed forecast, so it is experimental."};
+function connSrc(m){ return (m==="fc"?CONN.FC:CONFIG.connectivityImage)+"?v="+Math.floor(Date.now()/3e5); }
+function setConn(m){
+  if(m==="fc"&&!CONN.fcOk) return;
+  CONN.mode=m; img.hidden=false; document.getElementById("connempty").hidden=true;
+  img.src=connSrc(m); img.alt=m==="fc"?"Earth connectivity forecast for the next three days":"Earth solar wind connectivity map";
+  document.getElementById("conn-now").setAttribute("aria-pressed",m==="now"); document.getElementById("conn-fc").setAttribute("aria-pressed",m==="fc");
+  document.getElementById("conndesc").textContent=CONN_DESC[m];
+}
+async function checkForecast(){
+  try{
+    const r=await fetch(connSrc("fc"),{method:"HEAD",cache:"no-store"});
+    CONN.fcOk=r.ok&&/^image\//.test(r.headers.get("content-type")||"");
+    if(CONN.fcOk){                                                              // a forecast older than MAX_AGE_H (builds failing) is not shown as the standard view
+      try{ const j=await (await fetch(CONN.FCJ+"?v="+Math.floor(Date.now()/3e5),{cache:"no-store"})).json();
+        if(j&&j.time&&(Date.now()-Date.parse(j.time))/36e5>CONN.MAX_AGE_H) CONN.fcOk=false; }catch(e){ /* no date file: treat the picture as current */ }
+    }
+  }catch(e){ CONN.fcOk=false; }
+  document.getElementById("connsw").hidden=!CONN.fcOk;                         // the switch only appears when a current forecast exists
+  setConn(CONN.fcOk?"fc":"now");                                               // the forecast is the standard view
+}
+document.getElementById("conn-now").addEventListener("click",()=>setConn("now"));
+document.getElementById("conn-fc").addEventListener("click",()=>setConn("fc"));
+checkForecast();
 
 /* ============ Sun panel: one view, a 24 h AIA 193 loop, two switchable layers ============ */
 const rad = d => d*Math.PI/180;
