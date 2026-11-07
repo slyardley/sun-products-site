@@ -128,6 +128,7 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .hero{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:start}
 .hero .card{min-width:0}
 @media (max-width:860px){.hero{grid-template-columns:1fr}}
+.rsw button{font-size:12px;padding:3px 10px}
 .connhead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;margin-bottom:2px}
 .connhead h2{margin:0}
 .sunhead{display:flex;flex-wrap:nowrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -226,9 +227,9 @@ footer a:hover{text-decoration:underline}
     </div>
     <div class="controls">
       <button class="pill scale" id="scales" aria-expanded="false" aria-controls="scalepanel" title="What do R, S and G mean? Tap to find out"></button>
-      <span class="pill" role="group" aria-label="Time range" style="padding:3px;gap:2px">
+      <span class="pill" role="group" aria-label="Time range for all plots" title="Set X-ray, proton and solar wind plots to the same range" style="padding:3px;gap:2px">
         <button class="pill" data-h="6"  aria-pressed="false" style="border:0">6 h</button>
-        <button class="pill" data-h="24" aria-pressed="true"  style="border:0">24 h</button>
+        <button class="pill" data-h="24" aria-pressed="false" style="border:0">24 h</button>
         <button class="pill" data-h="72" aria-pressed="false" style="border:0">3 days</button>
       </span>
       <span class="pill" id="upd"><span class="dot"></span><span id="updtxt">Loading…</span></span>
@@ -309,7 +310,7 @@ footer a:hover{text-decoration:underline}
     
 
     <section class="card" id="c-xray">
-        <h2>X-ray flux <span class="rng" id="tag-xray"></span></h2>
+        <div class="connhead"><h2>X-ray flux <span class="rng" id="tag-xray"></span></h2><div class="seg rsw" role="group" aria-label="Time range for this plot"><button data-rc="xray" data-rh="6" aria-pressed="false">6 h</button><button data-rc="xray" data-rh="24" aria-pressed="true">24 h</button><button data-rc="xray" data-rh="72" aria-pressed="false">3 days</button></div></div>
         <p class="desc">Flares show up as sudden jumps. Letters mark the flare class: A, B, C, M, then X for the strongest.</p>
         <div class="legend"><span><i style="background:var(--accent)"></i>0.1–0.8 nm (flare class)</span><span><i style="background:var(--blue)"></i>0.05–0.4 nm</span></div>
         <div class="chart" id="ch-xray"></div>
@@ -318,7 +319,7 @@ footer a:hover{text-decoration:underline}
       </section>
 
     <section class="card" id="c-prot">
-        <h2>Proton flux <span class="rng" id="tag-prot"></span></h2>
+        <div class="connhead"><h2>Proton flux <span class="rng" id="tag-prot"></span></h2><div class="seg rsw" role="group" aria-label="Time range for this plot"><button data-rc="prot" data-rh="6" aria-pressed="false">6 h</button><button data-rc="prot" data-rh="24" aria-pressed="true">24 h</button><button data-rc="prot" data-rh="72" aria-pressed="false">3 days</button></div></div>
         <p class="desc">Energetic particles from the Sun. Radiation storms (S1 and above) begin when the ≥10 MeV flux reaches 10 pfu.</p>
         <div class="legend"><span><i style="background:var(--amber)"></i>≥10 MeV</span><span><i style="background:var(--pink)"></i>≥50 MeV</span><span><i style="background:var(--violet)"></i>≥100 MeV</span></div>
         <div class="chart" id="ch-prot"></div>
@@ -361,13 +362,17 @@ footer a:hover{text-decoration:underline}
       </section>
 
     <section class="card" id="c-wind">
-        <h2>Solar wind at L1 <span class="rng" id="tag-wind"></span></h2>
+        <div class="connhead"><h2>Solar wind at L1 <span class="rng" id="tag-wind"></span></h2><div class="seg rsw" role="group" aria-label="Time range for this plot"><button data-rc="wind" data-rh="6" aria-pressed="false">6 h</button><button data-rc="wind" data-rh="24" aria-pressed="false">24 h</button><button data-rc="wind" data-rh="72" aria-pressed="true">3 days</button></div></div>
         <p class="desc">Measured about 1.5 million km sunward of Earth, roughly an hour before it arrives.</p>
         <div class="sublabel">Speed (km/s)</div><div class="chart" id="ch-speed"></div>
         <div class="sublabel">Density (protons/cm³)</div><div class="chart" id="ch-dens"></div>
         <div class="sublabel">Magnetic field (nT)</div>
         <div class="legend"><span><i style="background:#fff"></i>Bt (total)</span><span><i style="background:var(--pos)"></i>Bz northward</span><span><i style="background:var(--neg)"></i>Bz southward</span></div>
         <div class="chart" id="ch-mag"></div>
+        <div class="sublabel">Field direction φ (degrees, GSE)</div>
+        <div class="legend"><span><i style="background:var(--pink)"></i>away sector (spiral near 135°)</span><span><i style="background:var(--blue)"></i>toward sector (spiral near 315°)</span></div>
+        <div class="chart" id="ch-phi"></div>
+        <div class="sublabel">Proton temperature (K)</div><div class="chart" id="ch-temp"></div>
         <div class="meta" id="m-wind"></div>
       </section>
 
@@ -435,6 +440,10 @@ footer a:hover{text-decoration:underline}
         <p>It shows where on the Sun the solar wind reaching Earth most likely came from. The wind measured at L1 is traced back along the Sun's magnetic field using a computer model. The white outlines mark where most of the traced field lines land, and the confidence label is a rough guide to how tightly they cluster. It is a research-style estimate, not a measurement, so treat it with care.</p></details>
       <details style="--c:#ff9a2e"><summary>Connectivity: Now or Forecast</summary>
         <p>Now uses the solar wind speed measured at L1. Forecast uses the speed that NOAA's WSA-Enlil model predicts for Earth over the next three days. For each future time it works out when that wind left the Sun and traces the magnetic field from there, so it shows where Earth's connection is expected to move. The coloured dots go from now (dark) to three days ahead (yellow), the faint dots show the effect of the speed uncertainty, and the strip underneath shows whether the field at the predicted footpoint points away from (+) or toward (−) the Sun. It assumes the Sun's magnetic field stays as it is today and that the wind keeps a constant speed on the way, and Enlil's recent errors are shown on the picture. It is experimental, so treat it as a guide and not a prediction to rely on.</p></details>
+      <details style="--c:#ff9a2e"><summary>Field direction (φ) and temperature</summary>
+        <p>φ is the direction of the interplanetary magnetic field in the plane of Earth's orbit. The Sun's field is wound into a spiral, so the field pointing away from the Sun sits near 135° and the field pointing toward it near 315°, and the line between the two sectors is the heliospheric current sheet. When φ swings from one band to the other, Earth has crossed from one sector into the next. It is the same away or toward direction as the field label on the connectivity picture. Temperature is the proton temperature measured by the same spacecraft. Faster wind is hotter, a sudden jump in speed and temperature together can mark the front of a fast stream, and wind that is unusually cool for its speed can be a hint of a coronal mass ejection. These are clues, not a diagnosis.</p></details>
+      <details style="--c:#ff9a2e"><summary>Time ranges for the plots</summary>
+        <p>Each plot has its own 6 hour, 24 hour and 3 day switch, and the buttons at the top set them all at once. NOAA's live solar wind feed only holds about a day, so the 3 day wind plots join the newest day to a 10-minute history that your hourly build saves on this site. The X-ray and proton plots come straight from NOAA's 3-day files.</p></details>
       <details style="--c:#ff9a2e"><summary>What is L1?</summary>
         <p>L1 is a point about 1.5 million km from Earth towards the Sun, where spacecraft measure the solar wind before it reaches us. At typical speeds that gives roughly an hour of warning, which is why the numbers at the top are a nowcast and not a forecast.</p></details>
     </div>
@@ -465,6 +474,7 @@ const CONFIG = {
   lascoUrl: "lasco_frames.json",     // SOHO/LASCO C2 and C3 pictures, hourly (made by the hourly job)
   pfssUrl: "pfss_lines.json",       // PFSS field lines from the newest HMI map (made by the hourly job)
   aia304Url: "aia_frames_304.json", aia131Url: "aia_frames_131.json",   // extra AIA channels, hourly (made by the hourly job)
+  windHistoryUrl: "wind_history.json",   // ten days of solar wind in 10 minute steps (made by the hourly job), for the 3-day wind plots
   hmiUrl: "hmi_frames.json",         // near-real-time HMI magnetogram pictures, every 2 hours (made by the hourly job)
   auroraUrl: "met_aurora.json",        // Met Office aurora forecast frames + text (made by the hourly job)
   coronaDir: "https://services.swpc.noaa.gov/images/animations/ccor2/",   // NOAA coronagraph frames (every 15 min)
@@ -489,7 +499,8 @@ const C = {accent:css("--accent"),pos:css("--pos"),neg:css("--neg"),blue:css("--
            pink:css("--pink"),amber:css("--amber"),muted:css("--muted")};
 
 const CAT={wind:"#ff9a2e",geo:"#8bd450",flare:"#ff6b81",rad:"#ffc94d",ar:"#5aa9ff"};   // one colour per topic, used by the numbers strip and the summary
-let RANGE_H = 24;
+const RANGES = {xray:24, prot:24, wind:72};   // each plot has its own time range, in hours; the solar wind starts on 3 days
+let HIST_T = 0;
 let DATA = {};
 
 /* ============ Helpers ============ */
@@ -635,13 +646,21 @@ function prepWind(rows){
   let r=rows.filter(x=>x.active); if(!r.length) r=rows;
   r=r.slice().sort((a,b)=>tms(a.time_tag)-tms(b.time_tag));
   const mk=k=>r.filter(x=>num(x[k])!==null).map(x=>[tms(x.time_tag),+x[k]]);
-  return {speed:mk("proton_speed"),dens:mk("proton_density"),src:(r[r.length-1]||{}).source};
+  return {speed:mk("proton_speed"),dens:mk("proton_density"),temp:mk("proton_temperature").filter(p=>p[1]>0),src:(r[r.length-1]||{}).source};
 }
 function prepMag(rows){
   let r=rows.filter(x=>x.active); if(!r.length) r=rows;
   r=r.slice().sort((a,b)=>tms(a.time_tag)-tms(b.time_tag));
   const mk=k=>r.filter(x=>num(x[k])!==null).map(x=>[tms(x.time_tag),+x[k]]);
-  return {bt:mk("bt"),bz:mk("bz_gsm"),src:(r[r.length-1]||{}).source};
+  const phi=r.filter(x=>num(x.phi_gse)!==null).map(x=>[tms(x.time_tag),phiPlot(+x.phi_gse)]);
+  return {bt:mk("bt"),bz:mk("bz_gsm"),phi,src:(r[r.length-1]||{}).source};
+}
+/* The field azimuth runs 0 to 360 degrees. Plotted from 45 to 405 degrees, each sector stays in one piece: away is centred on 135, toward on 315. */
+const phiPlot = d => ((d-45)%360+360)%360+45;
+function parseHist(j){
+  const f=j.fields||["speed","density","bt","bz"], rows=j.rows||[];
+  const col=(k,fn)=>{ const i=f.indexOf(k); return i<0?[]:rows.filter(r=>r[1+i]!==null&&r[1+i]!==undefined).map(r=>[r[0],fn?fn(+r[1+i]):+r[1+i]]); };
+  return {speed:col("speed"),dens:col("density"),bt:col("bt"),bz:col("bz"),temp:col("temp").filter(p=>p[1]>0),phi:col("phi",phiPlot)};
 }
 function bySel(rows,key,val){
   return rows.filter(x=>x[key]===val&&num(x.flux)!==null).map(x=>[tms(x.time_tag),+x.flux]).sort((a,b)=>a[0]-b[0]);
@@ -656,13 +675,17 @@ function statCell(k,v,unit,note,alert,cat){
 }
 
 function renderAll(){
-  const now=Date.now(), t1=now, tRange=now-RANGE_H*36e5, tWind=now-Math.min(RANGE_H,24)*36e5;
+  const now=Date.now(), t1=now, tX=now-RANGES.xray*36e5, tP=now-RANGES.prot*36e5, tWind=now-RANGES.wind*36e5;
   const D=DATA, cells=[];
 
   // ---- solar wind
   const card=id=>document.getElementById(id);
   if(D.wind&&D.mag){
-    const sp=windowed(D.wind.speed,tWind), dn=windowed(D.wind.dens,tWind), bt=windowed(D.mag.bt,tWind), bz=windowed(D.mag.bz,tWind);
+    // older times come from the saved history, the newest day from the live feed
+    const H=D.hist||{}, st=(h,l)=>{ if(!l||!l.length) return h||[]; if(!h||!h.length) return l; const t0=l[0][0]; return h.filter(p=>p[0]<t0-3e5).concat(l); };
+    const WS={speed:st(H.speed,D.wind.speed),dens:st(H.dens,D.wind.dens),bt:st(H.bt,D.mag.bt),bz:st(H.bz,D.mag.bz),temp:st(H.temp,D.wind.temp),phi:st(H.phi,D.mag.phi)};
+    const sp=windowed(WS.speed,tWind), dn=windowed(WS.dens,tWind), bt=windowed(WS.bt,tWind), bz=windowed(WS.bz,tWind), tp=windowed(WS.temp,tWind), ph=windowed(WS.phi,tWind);
+    const gapW=RANGES.wind>24?45*6e4:undefined;
     const ls=last(D.wind.speed), ld=last(D.wind.dens), lb=last(D.mag.bt), lz=last(D.mag.bz);
     cells.push(statCell("Solar wind speed",ls?ls[1].toFixed(0):"–","km/s",ls?hhmm(ls[0])+" UTC":"",null,CAT.wind));
     cells.push(statCell("Density",ld?ld[1].toFixed(1):"–","p/cm³",ld?hhmm(ld[0])+" UTC":"",null,CAT.wind));
@@ -670,29 +693,45 @@ function renderAll(){
     cells.push(statCell("Bz",lz?(lz[1]>0?"+":"")+lz[1].toFixed(1):"–","nT",lz?(lz[1]<0?"Southward":"Northward"):"",lz?(lz[1]<=-5?C.neg:lz[1]>=5?C.pos:null):null,CAT.wind));
 
     const sy=niceTicks(Math.min(...sp.map(p=>p[1]),300)-20,Math.max(...sp.map(p=>p[1]),500)+20,4);
-    lineChart(card("ch-speed"),{h:130,t:[tWind,t1],y:[sy.y0,sy.y1],ticks:sy.ticks.map(v=>({v,label:v})),label:"Solar wind speed",
+    lineChart(card("ch-speed"),{h:130,t:[tWind,t1],y:[sy.y0,sy.y1],ticks:sy.ticks.map(v=>({v,label:v})),label:"Solar wind speed",gap:gapW,
       series:[{name:"Speed",pts:sp,color:C.accent,w:1.8,fmt:v=>v.toFixed(0)+" km/s"}]});
     const dm=Math.max(...dn.map(p=>p[1]),5), dy=niceTicks(0,dm*1.05,3);
-    lineChart(card("ch-dens"),{h:110,t:[tWind,t1],y:[dy.y0,dy.y1],ticks:dy.ticks.map(v=>({v,label:v})),label:"Solar wind density",
+    lineChart(card("ch-dens"),{h:110,t:[tWind,t1],y:[dy.y0,dy.y1],ticks:dy.ticks.map(v=>({v,label:v})),label:"Solar wind density",gap:gapW,
       series:[{name:"Density",pts:dn,color:C.blue,w:1.6,fmt:v=>v.toFixed(1)+" /cm³"}]});
     const hi=Math.max(...bt.map(p=>p[1]),...bz.map(p=>p[1]),5), lo=Math.min(...bz.map(p=>p[1]),-5);
     const my=niceTicks(lo-1,hi+1,4);
-    lineChart(card("ch-mag"),{h:150,t:[tWind,t1],y:[my.y0,my.y1],ticks:my.ticks.map(v=>({v,label:v})),label:"Interplanetary magnetic field",
+    lineChart(card("ch-mag"),{h:150,t:[tWind,t1],y:[my.y0,my.y1],ticks:my.ticks.map(v=>({v,label:v})),label:"Interplanetary magnetic field",gap:gapW,
       series:[{name:"Bz",pts:bz,signed:true,fmt:v=>(v>0?"+":"")+v.toFixed(1)+" nT"},
               {name:"Bt",pts:bt,color:"#ffffff",w:1.4,fmt:v=>v.toFixed(1)+" nT"}]});
-    card("m-wind").textContent="Latest "+(ls?hhmm(ls[0]):"–")+" UTC · source: "+(D.wind.src||"NOAA")+(RANGE_H>24?" · 24 h of data available":"");
+    lineChart(card("ch-phi"),{h:120,t:[tWind,t1],y:[45,405],label:"Field direction",gap:gapW,
+      ticks:[45,135,225,315,405].map(v=>({v,label:(v%360)+"°"})),
+      hlines:[{v:135,color:C.pink,label:""},{v:315,color:C.blue,label:""}],
+      series:[{name:"φ (GSE)",pts:ph,color:C.violet,w:1.3,fmt:v=>(((v%360)+360)%360).toFixed(0)+"°"}]});
+    const tlo=Math.min(...tp.map(p=>p[1]),1e5), thi=Math.max(...tp.map(p=>p[1]),1e5);
+    const e0=Math.floor(Math.log10(tlo)), e1=Math.max(Math.ceil(Math.log10(thi)),e0+1), SUP="⁰¹²³⁴⁵⁶⁷⁸⁹";
+    const tt=[]; for(let e=e0;e<=e1;e++) tt.push({v:Math.pow(10,e),label:"10"+String(e).split("").map(c=>SUP[+c]).join("")});
+    lineChart(card("ch-temp"),{h:110,t:[tWind,t1],y:[Math.pow(10,e0),Math.pow(10,e1)],log:true,ticks:tt,label:"Proton temperature",gap:gapW,
+      series:[{name:"Temperature",pts:tp,color:C.pink,w:1.5,fmt:v=>v.toExponential(1)+" K"}]});
+    let note="Latest "+(ls?hhmm(ls[0]):"–")+" UTC · source: "+(D.wind.src||"NOAA");
+    if(RANGES.wind>24){
+      const h0=H.speed&&H.speed.length?H.speed[0][0]:null, te=WS.temp.length?WS.temp[0][0]:null;
+      if(h0===null) note+=" · only the last 24 h is available right now";
+      else if(h0>tWind+6*36e5) note+=" · history starts "+fullT(h0);
+      if(te&&te>tWind+6*36e5) note+=" · temperature and field direction history starts "+fullT(te);
+    }
+    card("m-wind").textContent=note;
   } else {
     ["ch-speed","ch-dens","ch-mag"].forEach(i=>card(i).innerHTML=`<div class="err">Solar wind data could not be loaded.</div>`);
   }
 
   // ---- x-ray
   if(D.xray){
-    const lg=windowed(D.xray.long,tRange), sh=windowed(D.xray.short,tRange);
+    const lg=windowed(D.xray.long,tX), sh=windowed(D.xray.short,tX);
     const ll=last(D.xray.long), peak=windowed(D.xray.long,now-864e5).reduce((m,p)=>p[1]>m[1]?p:m,[0,0]);
     const col=!ll?null:ll[1]>=1e-4?C.neg:ll[1]>=1e-5?C.accent:ll[1]>=1e-6?C.amber:null;
     cells.push(statCell("X-ray flux",ll?flareClass(ll[1]):"–","",peak[1]?`24 h peak ${flareClass(peak[1])} at ${hhmm(peak[0])}`:"",col,CAT.flare));
     const dec=[-9,-8,-7,-6,-5,-4,-3];
-    lineChart(card("ch-xray"),{h:210,t:[tRange,t1],y:[1e-9,1e-3],log:true,label:"GOES X-ray flux",
+    lineChart(card("ch-xray"),{h:210,t:[tX,t1],y:[1e-9,1e-3],log:true,label:"GOES X-ray flux",
       ticks:dec.map(e=>({v:Math.pow(10,e),center:true})),
       centerLabels:[["A",-8.5],["B",-7.5],["C",-6.5],["M",-5.5],["X",-4.5]].map(a=>({label:a[0],v:Math.pow(10,a[1])})),
       series:[{name:"0.1–0.8 nm",pts:lg,color:C.accent,w:1.8,fmt:v=>flareClass(v)+" ("+v.toExponential(1)+" W/m²)"},
@@ -702,11 +741,11 @@ function renderAll(){
 
   // ---- protons
   if(D.prot){
-    const p10=windowed(D.prot.p10,tRange), p50=windowed(D.prot.p50,tRange), p100=windowed(D.prot.p100,tRange);
+    const p10=windowed(D.prot.p10,tP), p50=windowed(D.prot.p50,tP), p100=windowed(D.prot.p100,tP);
     const l=last(D.prot.p10), lv=l?sLevel(l[1]):0;
     cells.push(statCell("Protons ≥10 MeV",l?fmtPfu(l[1]):"–","pfu",lv>0?`Radiation storm S${lv}`:"Below S1 threshold (10 pfu)",lv>0?SCALE_COL[lv]:null,CAT.rad));
     const dec=[-2,-1,0,1,2,3,4,5];
-    lineChart(card("ch-prot"),{h:210,t:[tRange,t1],y:[1e-2,1e5],log:true,label:"GOES integral proton flux",
+    lineChart(card("ch-prot"),{h:210,t:[tP,t1],y:[1e-2,1e5],log:true,label:"GOES integral proton flux",
       ticks:dec.map(e=>({v:Math.pow(10,e),label:["10⁻²","10⁻¹","1","10","10²","10³","10⁴","10⁵"][e+2]})),
       hlines:[{v:10,label:"S1",color:SCALE_COL[1]},{v:100,label:"S2",color:SCALE_COL[2]},{v:1e3,label:"S3",color:SCALE_COL[3]},{v:1e4,label:"S4",color:SCALE_COL[4]},{v:1e5,label:"S5",color:SCALE_COL[5]}],
       series:[{name:"≥10 MeV",pts:p10,color:C.amber,w:1.9,fmt:v=>fmtPfu(v)+" pfu"},
@@ -719,10 +758,10 @@ function renderAll(){
   if(D.kp) renderKp(now,cells); else card("ch-kp").innerHTML=`<div class="err">Kp data could not be loaded.</div>`;
 
   // order of the now-strip: X-ray, protons, solar wind speed, density, Bt, Bz, Kp
-  const lbl=RANGE_H===6?"6 hours":RANGE_H===72?"3 days":"24 hours";
-  document.getElementById("tag-xray").textContent="Showing last "+lbl;
-  document.getElementById("tag-prot").textContent="Showing last "+lbl;
-  document.getElementById("tag-wind").textContent=RANGE_H===6?"Showing last 6 hours":"Showing last 24 hours"+(RANGE_H===72?" (all available)":"");
+  const lblH=h=>h===6?"6 hours":h===72?"3 days":"24 hours";
+  document.getElementById("tag-xray").textContent="Showing last "+lblH(RANGES.xray);
+  document.getElementById("tag-prot").textContent="Showing last "+lblH(RANGES.prot);
+  document.getElementById("tag-wind").textContent="Showing last "+lblH(RANGES.wind);
   document.getElementById("tag-kp").textContent="Last 2 days + 3-day forecast";
   const order=["X-ray flux","Protons","Solar wind speed","Density","Magnetic field","Bz","Kp"];
   const rank=h=>{const i=order.findIndex(k=>h.includes('class="k">'+k)); return i<0?99:i;};
@@ -853,6 +892,8 @@ async function load(){
   const jobs={
     wind:   get(EP.wind).then(prepWind),
     mag:    get(EP.mag).then(prepMag),
+    hist:   (DATA.hist&&Date.now()-HIST_T<10*6e4) ? Promise.resolve(DATA.hist)
+              : fetch(CONFIG.windHistoryUrl,{cache:"no-store"}).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(j=>{ HIST_T=Date.now(); return parseHist(j); }),
     xray:   get(EP.xray).then(r=>({long:bySel(r,"energy","0.1-0.8nm"),short:bySel(r,"energy","0.05-0.4nm"),sat:(r[r.length-1]||{}).satellite})),
     prot:   get(EP.prot).then(r=>({p10:bySel(r,"energy",">=10 MeV"),p30:bySel(r,"energy",">=30 MeV"),p50:bySel(r,"energy",">=50 MeV"),p100:bySel(r,"energy",">=100 MeV"),sat:(r[r.length-1]||{}).satellite})),
     kp:     get(EP.kp).then(r=>r.map(x=>({t:tms(x.time_tag),kp:+x.kp,obs:x.observed})).sort((a,b)=>a.t-b.t)),
@@ -874,11 +915,17 @@ async function load(){
   dot.style.background=ok===keys.length?C.pos:(ok?C.amber:C.neg);
 }
 
+/* Each plot has its own 6 h / 24 h / 3 days switch; the buttons at the top set all of them at once. */
+function syncRangeUI(){
+  document.querySelectorAll("button[data-rc]").forEach(b=>b.setAttribute("aria-pressed",RANGES[b.dataset.rc]===+b.dataset.rh));
+  const all=Object.values(RANGES);
+  document.querySelectorAll("button[data-h]").forEach(b=>b.setAttribute("aria-pressed",all.every(v=>v===+b.dataset.h)));
+}
+document.querySelectorAll("button[data-rc]").forEach(b=>b.addEventListener("click",()=>{ RANGES[b.dataset.rc]=+b.dataset.rh; syncRangeUI(); renderAll(); }));
 document.querySelectorAll("button[data-h]").forEach(b=>b.addEventListener("click",()=>{
-  RANGE_H=+b.dataset.h;
-  document.querySelectorAll("button[data-h]").forEach(x=>x.setAttribute("aria-pressed",x===b));
-  renderAll();
+  Object.keys(RANGES).forEach(k=>RANGES[k]=+b.dataset.h); syncRangeUI(); renderAll();
 }));
+syncRangeUI();
 const img=document.getElementById("connimg");
 img.addEventListener("error",()=>{
   if(CONN.mode==="fc"){ CONN.fcOk=false; document.getElementById("connsw").hidden=true; setConn("now"); return; }     // no forecast picture: fall back to Now
