@@ -73,6 +73,7 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .srow strong{display:block;font-size:14px}
 .srow span{display:block;font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px}
 .scale b{font-weight:700}
+.scale .mx{color:var(--muted);font-weight:500;margin-left:2px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 
 /* now strip */
@@ -757,7 +758,7 @@ function renderAll(){
   if(D.prot){
     const p10=windowed(D.prot.p10,tP), p50=windowed(D.prot.p50,tP), p100=windowed(D.prot.p100,tP);
     const l=last(D.prot.p10), lv=l?sLevel(l[1]):0;
-    cells.push(statCell("Protons ≥10 MeV",l?fmtPfu(l[1]):"–","pfu",lv>0?`Radiation storm S${lv}`:"Below S1 threshold (10 pfu)",lv>0?SCALE_COL[lv]:null,CAT.rad));
+    cells.push(statCell("Protons ≥10 MeV",l?fmtPfu(l[1]):"–","pfu",(lv>0?`Radiation storm S${lv}`:"Below S1 threshold (10 pfu)")+(()=>{const w=windowed(D.prot.p10,now-864e5); return w.length?` · 24 h peak ${fmtPfu(Math.max(...w.map(q=>q[1])))} pfu`:"";})(),lv>0?SCALE_COL[lv]:null,CAT.rad));
     const dec=[-2,-1,0,1,2,3,4,5];
     lineChart(card("ch-prot"),{h:210,t:[tP,t1],y:[1e-2,1e5],log:true,label:"GOES integral proton flux",
       ticks:dec.map(e=>({v:Math.pow(10,e),label:["10⁻²","10⁻¹","1","10","10²","10³","10⁴","10⁵"][e+2]})),
@@ -771,13 +772,13 @@ function renderAll(){
   // ---- Kp
   if(D.kp) renderKp(now,cells); else card("ch-kp").innerHTML=`<div class="err">Kp data could not be loaded.</div>`;
 
-  // order of the now-strip: X-ray, protons, solar wind speed, density, Bt, Bz, Kp
+  // order of the now-strip: geomagnetic (G), X-ray, protons, solar wind speed, density, Bt, Bz
   const lblH=h=>h===6?"6 hours":h===72?"3 days":"24 hours";
   document.getElementById("tag-xray").textContent="Showing last "+lblH(RANGES.xray);
   document.getElementById("tag-prot").textContent="Showing last "+lblH(RANGES.prot);
   document.getElementById("tag-wind").textContent="Showing last "+lblH(RANGES.wind);
   document.getElementById("tag-kp").textContent="Last 2 days + 3-day forecast";
-  const order=["X-ray flux","Protons","Solar wind speed","Density","Magnetic field","Bz","Kp"];
+  const order=["Geomagnetic","X-ray flux","Protons","Solar wind speed","Density","Magnetic field","Bz"];
   const rank=h=>{const i=order.findIndex(k=>h.includes('class="k">'+k)); return i<0?99:i;};
   cells.sort((a,b)=>rank(a)-rank(b));
   document.getElementById("now").innerHTML=cells.join("");
@@ -810,7 +811,12 @@ function renderKp(now,cells){
   const cur=rows.filter(r=>r.obs!=="predicted").pop();
   const nxt=rows.filter(r=>r.obs==="predicted"&&r.t<now+72*36e5);
   const mx=nxt.reduce((a,r)=>r.kp>a.kp?r:a,{kp:-1,t:0});
-  cells.splice(4,0,statCell("Kp (latest)",cur?cur.kp.toFixed(1):"–","",mx.kp>=0?`Forecast max ${mx.kp.toFixed(1)}, ${dayLbl(mx.t)}`:"",cur&&cur.kp>=5?C.neg:cur&&cur.kp>=4?C.amber:null,CAT.geo));
+  const sc=DATA.scales||null, gNow=sc&&sc.G?Math.min(+sc.G.Scale||0,5):null, gMax=sc&&sc._max24&&sc._max24.G?Math.min(+sc._max24.G.Scale||0,5):null;
+  const o24=rows.filter(r=>r.obs!=="predicted"&&r.t>=now-864e5), mk=o24.reduce((a,r)=>r.kp>a.kp?r:a,{kp:-1,t:0});
+  const kpNow=cur?cur.kp.toFixed(1):"–";
+  let gnote=gMax!==null?`24 h max G${gMax}`+(mk.kp>=0?` (Kp ${mk.kp.toFixed(1)})`:""):(mk.kp>=0?`24 h max Kp ${mk.kp.toFixed(1)}`:"");
+  if(mx.kp>=0) gnote+=(gnote?" · ":"")+`forecast max Kp ${mx.kp.toFixed(1)}, ${dayLbl(mx.t)}`;
+  cells.push(statCell("Geomagnetic (G)",gNow===null?kpNow:"G"+gNow,gNow===null?"":"Kp "+kpNow,gnote,gNow>=1?SCALE_COL[gNow]:(cur&&cur.kp>=4?C.amber:null),gNow>=1?SCALE_COL[gNow]:CAT.geo));
   document.getElementById("m-kp").textContent="Solid bars observed or estimated · dashed bars forecast by NOAA";
 }
 
@@ -819,14 +825,15 @@ function renderScales(){
   if(!s){el.textContent="NOAA scales unavailable";return;}
   const lv=k=>Math.min(+(s[k]&&s[k].Scale||0),5);
   const ch=(k)=>`<b style="color:${SCALE_COL[lv(k)]}">${k}${lv(k)}</b>`;
-  el.innerHTML=`Now: ${ch("R")} ${ch("S")} ${ch("G")} <span aria-hidden="true" style="color:var(--muted)">ⓘ</span>`;
+  const m24=s._max24||null, lm=k=>Math.min(+(m24&&m24[k]&&m24[k].Scale||0),5), chm=k=>`<b style="color:${SCALE_COL[lm(k)]}">${k}${lm(k)}</b>`;
+  el.innerHTML=`Now: ${ch("R")} ${ch("S")} ${ch("G")}`+` <span aria-hidden="true" style="color:var(--muted)">ⓘ</span>`;
   const NAMES=["none","minor","moderate","strong","severe","extreme"];
   const rows=[
     ["R","Radio blackouts","Caused by solar flares. R1 starts with an M1 flare, and R3 needs an X1 or bigger. It affects high-frequency radio on the sunlit side of Earth."],
     ["S","Radiation storms","Caused by energetic protons from flares and CMEs. S1 starts when the flux of protons above 10 MeV reaches 10 pfu. It mostly matters for satellites, astronauts and high-latitude flights."],
     ["G","Geomagnetic storms","Caused by the solar wind disturbing Earth's magnetic field. G1 is Kp 5 and G5 is Kp 9. This is the one that brings aurora further south."]];
-  panel.innerHTML=`<h2>NOAA space weather scales, right now</h2><p class="desc">Each scale runs from 0 (nothing happening) to 5 (extreme). The letter says what kind of event, and the number says how strong it is.</p><div class="srows">`+
-    rows.map(r=>{const v=lv(r[0]);return `<div class="srow" style="--c:${SCALE_COL[v]}"><b>${r[0]}${v}</b><div><strong>${r[1]}: ${NAMES[v]}${v===0?" right now":""}</strong><span>${r[2]}</span></div></div>`;}).join("")+`</div>`;
+  panel.innerHTML=`<h2>NOAA space weather scales, now and over the last 24 hours</h2><p class="desc">Each scale runs from 0 (nothing happening) to 5 (extreme). The letter says what kind of event, and the number says how strong it is.</p><div class="srows">`+
+    rows.map(r=>{const v=lv(r[0]);return `<div class="srow" style="--c:${SCALE_COL[v]}"><b>${r[0]}${v}</b><div><strong>${r[1]}: ${NAMES[v]}${v===0?" right now":""}</strong>${m24?`<span style="color:var(--text)">Highest in the last 24 hours: <b style="color:${SCALE_COL[lm(r[0])]};font-size:inherit;min-width:0">${r[0]}${lm(r[0])}</b> ${NAMES[lm(r[0])]}</span>`:""}<span>${r[2]}</span></div></div>`;}).join("")+`</div>`;
 }
 (function(){
   const btn=document.getElementById("scales"), panel=document.getElementById("scalepanel");
@@ -911,7 +918,7 @@ async function load(){
     xray:   get(EP.xray).then(r=>({long:bySel(r,"energy","0.1-0.8nm"),short:bySel(r,"energy","0.05-0.4nm"),sat:(r[r.length-1]||{}).satellite})),
     prot:   get(EP.prot).then(r=>({p10:bySel(r,"energy",">=10 MeV"),p30:bySel(r,"energy",">=30 MeV"),p50:bySel(r,"energy",">=50 MeV"),p100:bySel(r,"energy",">=100 MeV"),sat:(r[r.length-1]||{}).satellite})),
     kp:     get(EP.kp).then(r=>r.map(x=>({t:tms(x.time_tag),kp:+x.kp,obs:x.observed})).sort((a,b)=>a.t-b.t)),
-    scales: get(EP.scales).then(r=>r["0"]),
+    scales: get(EP.scales).then(r=>Object.assign({},r["0"],{_max24:r["-1"]})),
     probs:  get(EP.probs).then(r=>r.reduce((m,x)=>x.date>m.date?x:m,r[0])),
     regions:get(EP.regions).then(r=>{const fin=r.filter(x=>x.status), pool=fin.length?fin:r, d=pool.reduce((m,x)=>x.observed_date>m?x.observed_date:m,"");return pool.filter(x=>x.observed_date===d);})
   };
