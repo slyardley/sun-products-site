@@ -385,8 +385,8 @@ footer a:hover{text-decoration:underline}
     </section>
 
     <section class="card" id="c-kp">
-        <h2>Geomagnetic activity (Kp) <span class="rng" id="tag-kp"></span></h2>
-        <p class="desc">Three-hourly planetary Kp, with NOAA's forecast for the next three days. Kp 5 or more is a geomagnetic storm (G1).</p>
+        <h2>Geomagnetic storms (G) and Kp <span class="rng" id="tag-kp"></span></h2>
+        <p class="desc">NOAA's G scale comes straight from the Kp index: Kp 5 is G1 (minor), 6 is G2 (moderate), 7 is G3 (strong), 8 is G4 (severe) and 9 is G5 (extreme). Bars show three-hourly planetary Kp, with NOAA's forecast for the next three days.</p>
         <div class="chart" id="ch-kp"></div>
         <div class="meta" id="m-kp"></div>
       </section>
@@ -772,13 +772,13 @@ function renderAll(){
   // ---- Kp
   if(D.kp) renderKp(now,cells); else card("ch-kp").innerHTML=`<div class="err">Kp data could not be loaded.</div>`;
 
-  // order of the now-strip: geomagnetic (G), X-ray, protons, solar wind speed, density, Bt, Bz
+  // order of the now-strip, following the chain from the Sun to Earth: X-ray, protons, solar wind speed, density, Bt, Bz, geomagnetic (G)
   const lblH=h=>h===6?"6 hours":h===72?"3 days":"24 hours";
   document.getElementById("tag-xray").textContent="Showing last "+lblH(RANGES.xray);
   document.getElementById("tag-prot").textContent="Showing last "+lblH(RANGES.prot);
   document.getElementById("tag-wind").textContent="Showing last "+lblH(RANGES.wind);
   document.getElementById("tag-kp").textContent="Last 2 days + 3-day forecast";
-  const order=["Geomagnetic","X-ray flux","Protons","Solar wind speed","Density","Magnetic field","Bz"];
+  const order=["X-ray flux","Protons","Solar wind speed","Density","Magnetic field","Bz","Geomagnetic"];
   const rank=h=>{const i=order.findIndex(k=>h.includes('class="k">'+k)); return i<0?99:i;};
   cells.sort((a,b)=>rank(a)-rank(b));
   document.getElementById("now").innerHTML=cells.join("");
@@ -801,7 +801,7 @@ function renderKp(now,cells){
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Planetary Kp index, observed and forecast">`;
   [0,3,5,6,7,8,9].forEach(v=>s+=`<line class="gl" x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" ${v>=5?`style="stroke:#ff5d5d${v===5?"66":"33"};stroke-dasharray:4 4"`:""}/><text x="${m.l-6}" y="${Y(v)+3.5}" text-anchor="end">${v}</text>${v>=5?`<text x="${W-m.r-3}" y="${Y(v)-3}" text-anchor="end" style="fill:#ff8f8f;font-weight:600">G${v-4}</text>`:""}`);
   for(let t=Math.ceil(t0/864e5)*864e5;t<=t1;t+=864e5) s+=`<line class="gl" x1="${X(t)}" x2="${X(t)}" y1="${m.t}" y2="${m.t+ih}" style="stroke:#33406a"/><text x="${X(t)+4}" y="${H-5}" style="font-weight:700;fill:#c3cce6">${dayLbl(t)}</text>`;
-  const kc=v=>v>=5?C.neg:v>=4?C.amber:C.pos;
+  const kc=v=>v>=5?SCALE_COL[Math.min(Math.floor(v)-4,5)]:v>=4?C.amber:C.pos;
   rows.filter(r=>r.t+3*36e5>=t0).forEach(r=>{
     const x=Math.max(X(r.t)+1,m.l), h=Math.max(Y(0)-Y(r.kp),1.5), pred=r.obs==="predicted";
     s+=`<rect x="${x}" y="${Y(r.kp)}" width="${bw}" height="${h}" rx="2" fill="${kc(r.kp)}" fill-opacity="${pred?0.25:0.95}" ${pred?`stroke="${kc(r.kp)}" stroke-dasharray="3 2"`:""}><title>${fullT(r.t)}: Kp ${r.kp.toFixed(1)} (${r.obs})</title></rect>`;
@@ -814,8 +814,9 @@ function renderKp(now,cells){
   const sc=DATA.scales||null, gNow=sc&&sc.G?Math.min(+sc.G.Scale||0,5):null, gMax=sc&&sc._max24&&sc._max24.G?Math.min(+sc._max24.G.Scale||0,5):null;
   const o24=rows.filter(r=>r.obs!=="predicted"&&r.t>=now-864e5), mk=o24.reduce((a,r)=>r.kp>a.kp?r:a,{kp:-1,t:0});
   const kpNow=cur?cur.kp.toFixed(1):"–";
-  let gnote=gMax!==null?`24 h max G${gMax}`+(mk.kp>=0?` (Kp ${mk.kp.toFixed(1)})`:""):(mk.kp>=0?`24 h max Kp ${mk.kp.toFixed(1)}`:"");
-  if(mx.kp>=0) gnote+=(gnote?" · ":"")+`forecast max Kp ${mx.kp.toFixed(1)}, ${dayLbl(mx.t)}`;
+  const gFromKp=mk.kp>=5?Math.min(Math.floor(mk.kp)-4,5):0, gMaxS=(gMax===null&&mk.kp<0)?null:Math.max(gMax||0,mk.kp>=0?gFromKp:0);   // the higher of NOAA's figure and the one worked out from the Kp bars, so the tile never contradicts itself
+  let gnote=gMaxS!==null?`24 h max G${gMaxS}`+(mk.kp>=0?` (Kp ${mk.kp.toFixed(1)})`:""):(mk.kp>=0?`24 h max Kp ${mk.kp.toFixed(1)}`:"");
+  if(mx.kp>=0) gnote+=(gnote?" · ":"")+`forecast max G${mx.kp>=5?Math.min(Math.floor(mx.kp)-4,5):0} (Kp ${mx.kp.toFixed(1)}), ${dayLbl(mx.t)}`;
   cells.push(statCell("Geomagnetic (G)",gNow===null?kpNow:"G"+gNow,gNow===null?"":"Kp "+kpNow,gnote,gNow>=1?SCALE_COL[gNow]:(cur&&cur.kp>=4?C.amber:null),gNow>=1?SCALE_COL[gNow]:CAT.geo));
   document.getElementById("m-kp").textContent="Solid bars observed or estimated · dashed bars forecast by NOAA";
 }
@@ -867,8 +868,9 @@ function renderSummary(){
     const obs=D.kp.filter(k=>k.obs!=="predicted"&&k.t+3*36e5>t24), fc=D.kp.filter(k=>k.obs==="predicted"&&k.t<now+72*36e5);
     if(obs.length){
       const mo=obs.reduce((m,k)=>k.kp>m.kp?k:m); g=mo.kp>=5?Math.min(Math.floor(mo.kp)-4,5):0; if(mo.kp>=4) unsettled=true;
-      let t=mo.kp>=5?`Kp reached ${n(mo.kp.toFixed(1))} (geomagnetic storm level, ${n("G"+g)}) around ${tl(mo.t)} UTC.`:`Kp peaked at ${n(mo.kp.toFixed(1))}${mo.kp>=4?" (unsettled)":", no storm level reached"}.`;
-      if(fc.length){const mf=fc.reduce((m,k)=>k.kp>m.kp?k:m); t+=` NOAA forecasts up to ${n(mf.kp.toFixed(1))} over the next three days${mf.kp>=5?" (storm level)":""}.`;}
+      const GN=["no storm","minor storm","moderate storm","strong storm","severe storm","extreme storm"], gOf=k=>k>=5?Math.min(Math.floor(k)-4,5):0;
+      let t=`${n("G"+g)} (${GN[g]}) in the last 24 hours. `+(mo.kp>=5?`Kp reached ${n(mo.kp.toFixed(1))} around ${tl(mo.t)} UTC.`:`Kp peaked at ${n(mo.kp.toFixed(1))}${mo.kp>=4?", just below the G1 storm level (Kp 5)":""}.`);
+      if(fc.length){const mf=fc.reduce((m,k)=>k.kp>m.kp?k:m); t+=` NOAA forecasts up to ${n("G"+gOf(mf.kp))} (Kp ${mf.kp.toFixed(1)}) over the next three days.`;}
       L.push(["Geomagnetic",t,COL.geo]);
     }
   }
@@ -896,9 +898,10 @@ function renderSummary(){
   const lvl=Math.max(g,sv,r);
   const el=document.getElementById("sum-lvl");
   if(!L.length){el.textContent="Summary unavailable";return;}
-  el.innerHTML=(lvl>0?`Storm-level activity<small>Highest NOAA scale in the last 24 h: ${[g&&"G"+g,sv&&"S"+sv,r&&"R"+r].filter(Boolean).join(", ")}</small>`
-                    :unsettled?`Unsettled<small>No NOAA-scale storms in the last 24 h, but some activity</small>`
-                    :`Quiet<small>Nothing above NOAA-scale thresholds in the last 24 h</small>`);
+  const sc=(k,v)=>`<b style="color:${SCALE_COL[Math.min(v,5)]}">${k}${v}</b>`, all=`${sc("R",r)} ${sc("S",sv)} ${sc("G",g)}`;
+  el.innerHTML=(lvl>0?`Storm-level activity<small>Highest NOAA scale in the last 24 h: ${all}</small>`
+                    :unsettled?`Unsettled<small>Highest NOAA scale in the last 24 h: ${all}, but some activity</small>`
+                    :`Quiet<small>Highest NOAA scale in the last 24 h: ${all}</small>`);
   el.style.color=lvl>0?SCALE_COL[Math.min(Math.max(lvl,2),5)]:unsettled?C.amber:C.pos;
   document.getElementById("sum-list").innerHTML=L.map(x=>`<li style="--c:${x[2]}"><b>${x[0]}.</b>${x[1]}</li>`).join("");
 }
