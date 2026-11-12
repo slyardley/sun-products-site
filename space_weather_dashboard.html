@@ -130,6 +130,7 @@ button.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--acc
 .hero .card{min-width:0}
 @media (max-width:860px){.hero{grid-template-columns:1fr}}
 .rsw button{font-size:12px;padding:3px 10px}
+#drapimg{width:100%;max-width:780px;height:auto;border-radius:12px;display:block;margin:6px auto;background:#000}
 .connhead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;margin-bottom:2px}
 .connhead h2{margin:0}
 .sunhead{display:flex;flex-wrap:nowrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -245,6 +246,15 @@ footer a:hover{text-decoration:underline}
   </section>
 
   <div class="now" id="now"></div>
+
+    <section class="card" id="c-drap" hidden style="margin-bottom:14px">
+        <div class="connhead"><h2>HF radio blackout <span class="rng" id="tag-drap"></span></h2></div>
+        <p class="desc">Where a flare is absorbing high-frequency (HF) radio in the sunlit upper atmosphere. The colour is the highest frequency affected by 1 dB of absorption, so the brighter the colour, the more of the HF band is degraded. The strongest effect sits under the Sun.</p>
+        <img id="drapimg" alt="NOAA D-RAP map of HF radio absorption across the globe" loading="lazy">
+        <div class="oline" id="o-drap"></div>
+        <p class="xlink">Map: <a href="https://www.swpc.noaa.gov/products/d-region-absorption-predictions-d-rap" target="_blank" rel="noopener">NOAA SWPC D-RAP</a>, updated every minute from GOES X-ray and proton data. It is an estimate, not a measurement of radio conditions. This card only appears after an M-class flare or bigger.</p>
+        <div class="meta" id="m-drap"></div>
+      </section>
 
 <div class="hero">
     <section class="card sun" id="c-sun">
@@ -444,6 +454,8 @@ footer a:hover{text-decoration:underline}
         <p>The thin strip under the magnetic field plot shows which way the interplanetary magnetic field points along the Sun–Earth line: pink when it points away from the Sun (+), blue when it points toward it (−), grey when it keeps changing. It uses the same rule as the field label on the connectivity picture. The Sun's field is wound into a spiral, and when the colour switches Earth has crossed from one sector into the next, at the heliospheric current sheet. Temperature is the proton temperature measured by the same spacecraft. Faster wind is hotter, a sudden jump in speed and temperature together can mark the front of a fast stream, and wind that is unusually cool for its speed can be a hint of a coronal mass ejection. These are clues, not a diagnosis.</p></details>
       <details style="--c:#ff9a2e"><summary>Time ranges for the plots</summary>
         <p>Each plot has its own 6 hour, 24 hour and 3 day switch, and the buttons at the top set them all at once. NOAA's live solar wind feed only holds about a day, so the 3 day wind plots join the newest day to a 10-minute history that your hourly build saves on this site. The X-ray and proton plots come straight from NOAA's 3-day files.</p></details>
+      <details style="--c:#ff9a2e"><summary>HF radio blackout map</summary>
+        <p>A strong flare floods the sunlit side of Earth's upper atmosphere with X-rays, and that makes it absorb high-frequency (HF) radio, the 3 to 30 MHz band used by aircraft, ships and radio amateurs. NOAA's D-RAP map shows the highest frequency that would lose at least 1 dB of signal. Brighter colours mean more of the band is affected, and the effect is strongest where the Sun is overhead. This card only appears after an M-class flare (R1) or bigger and fades away when the flare is over. It is a model estimate built from satellite data, so it shows where problems are likely, not where radio has actually failed.</p></details>
       <details style="--c:#ff9a2e"><summary>What is L1?</summary>
         <p>L1 is a point about 1.5 million km from Earth towards the Sun, where spacecraft measure the solar wind before it reaches us. At typical speeds that gives roughly an hour of warning, which is why the numbers at the top are a nowcast and not a forecast.</p></details>
     </div>
@@ -785,6 +797,44 @@ function renderAll(){
 }
 
 const KP_BASE=190; let KPH=KP_BASE;   // Kp chart height. balanceColumns() makes it taller so the right-hand column ends level with the left one
+
+/* ---- HF radio blackout map (NOAA D-RAP). Shown only after a real flare: an M-class flare (R1) or bigger in the last 90 minutes,
+        or while NOAA's radio blackout scale is R1 or more. The map updates every minute, so it also shows the recovery. ---- */
+const DRAP={base:"https://services.swpc.noaa.gov",img:"/images/d-rap/global.png",tab:"/text/drap_global_frequencies.txt",win:90*6e4,min:1e-5,shown:false};
+function parseDrap(t){
+  const msg=k=>{ const m=t.match(new RegExp("#\\s*"+k+"\\s*:([^\\n]*)")); return m?m[1].trim():""; };
+  const out={valid:(t.match(/Product Valid At\s*:\s*([^\n]+)/)||[])[1],xray:msg("X-RAY Message"),recovery:msg("Estimated Recovery Time"),max:0,lat:null,lon:null};
+  let lons=null;
+  for(const line of t.split("\n")){
+    if(!lons&&/^\s+-?\d+(\s+-?\d+){20,}\s*$/.test(line)){ lons=line.trim().split(/\s+/).map(Number); continue; }
+    const m=line.match(/^\s*(-?\d+)\s*\|(.*)$/); if(!m||!lons) continue;
+    m[2].trim().split(/\s+/).forEach((v,i)=>{ const x=parseFloat(v); if(x>out.max){ out.max=x; out.lat=+m[1]; out.lon=lons[i]; } });
+  }
+  return out;
+}
+async function renderDrap(){
+  const sec=document.getElementById("c-drap"); if(!sec) return;
+  const D=DATA, now=Date.now(); let on=false, why="";
+  if(D.xray&&D.xray.long){
+    const w=D.xray.long.filter(p=>p[0]>=now-DRAP.win);
+    if(w.length){ const pk=w.reduce((a,p)=>p[1]>a[1]?p:a); if(pk[1]>=DRAP.min){ on=true; why=`after the ${flareClass(pk[1])} flare at ${hhmm(pk[0])} UTC`; } }
+  }
+  if(!on&&D.scales&&D.scales.R&&+D.scales.R.Scale>=1){ on=true; why=`NOAA radio blackout scale R${D.scales.R.Scale}`; }
+  sec.hidden=!on;
+  DRAP.shown=on;
+  if(!on) return;
+  document.getElementById("tag-drap").textContent=why;
+  const img=document.getElementById("drapimg");
+  img.onerror=()=>{ document.getElementById("o-drap").textContent="The NOAA map could not be loaded just now."; };
+  img.src=DRAP.base+DRAP.img+"?v="+Math.floor(now/6e4);
+  try{
+    const r=await fetch(DRAP.base+DRAP.tab,{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
+    const d=parseDrap(await r.text()), ns=Math.abs(d.lat)+"°"+(d.lat>=0?"N":"S"), ew=Math.abs(d.lon)+"°"+(d.lon>=0?"E":"W");
+    document.getElementById("o-drap").innerHTML=d.max>0?`<b>Strongest absorption: up to ${d.max.toFixed(0)} MHz</b> near ${ns} ${ew}`:"";
+    const bits=[]; if(d.xray) bits.push("NOAA: "+d.xray); if(d.recovery&&!/no estimate/i.test(d.recovery)) bits.push("Estimated recovery: "+d.recovery); if(d.valid) bits.push("Valid "+d.valid);
+    document.getElementById("m-drap").textContent=bits.join(" · ");
+  }catch(e){ document.getElementById("o-drap").textContent=""; document.getElementById("m-drap").textContent=""; }
+}
 function balanceColumns(){
   const cols=document.querySelectorAll(".cols > .col"); if(cols.length<2||!DATA.kp) return;
   if(window.matchMedia("(max-width:860px)").matches){ if(KPH!==KP_BASE){ KPH=KP_BASE; renderKp(Date.now(),[]); } return; }   // one column on small screens
@@ -933,7 +983,7 @@ async function load(){
     const rec=(DATA.prot&&DATA.prot.p30||[]).filter(q=>q[0]>=Date.now()-864e5);
     DATA.diff=(rec.length&&Math.max(...rec.map(q=>q[1]))>=CONFIG.diffFetchMinPfu)?parseDiff(await get(EP.diff)):null;
   }catch(e){ console.warn("differential protons",e); }
-  renderScales(); renderAll(); renderSummary(); renderOutlook(); renderHardness(); drawOverlay(); setTimeout(balanceColumns,50);
+  renderScales(); renderAll(); renderSummary(); renderOutlook(); renderHardness(); drawOverlay(); renderDrap(); setTimeout(balanceColumns,50);
   const t=document.getElementById("updtxt"), dot=document.querySelector("#upd .dot");
   t.textContent=ok===keys.length?"Updated "+hhmm(Date.now())+" UTC":(ok?"Partly updated "+hhmm(Date.now())+" UTC":"Can't reach NOAA");
   dot.style.background=ok===keys.length?C.pos:(ok?C.amber:C.neg);
