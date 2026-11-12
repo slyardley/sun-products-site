@@ -956,7 +956,7 @@ img.addEventListener("error",()=>{
   img.hidden=true; document.getElementById("connempty").hidden=false;
 });
 /* ---- Now | Forecast: the forecast picture is made by the hourly build from NOAA's WSA-Enlil wind speed forecast ---- */
-const CONN={mode:"now",fcOk:false,FC:"connectivity_forecast.png",FCJ:"connectivity_forecast.json",MAX_AGE_H:9};
+const CONN={mode:"now",fcOk:false,stale:false,age:0,made:"",FC:"connectivity_forecast.png",FCJ:"connectivity_forecast.json",FRESH_H:9,HIDE_H:48};
 const CONN_DESC={
   now:"Where the solar wind reaching Earth most likely left the Sun, from tracing the magnetic field back from L1.",
   fc:"Where Earth's magnetic connection to the Sun is predicted to move over the next three days. It is driven by NOAA's WSA-Enlil wind speed forecast, so it is experimental."};
@@ -966,19 +966,22 @@ function setConn(m){
   CONN.mode=m; img.hidden=false; document.getElementById("connempty").hidden=true;
   img.src=connSrc(m); img.alt=m==="fc"?"Earth connectivity forecast for the next three days":"Earth solar wind connectivity map";
   document.getElementById("conn-now").setAttribute("aria-pressed",m==="now"); document.getElementById("conn-fc").setAttribute("aria-pressed",m==="fc");
-  document.getElementById("conndesc").textContent=CONN_DESC[m];
+  document.getElementById("conndesc").textContent=CONN_DESC[m]+(m==="fc"&&CONN.stale?`  ⚠ This forecast was made ${CONN.made} (${Math.round(CONN.age)} hours ago), so it is out of date until the next update.`:"");
 }
 async function checkForecast(){
   try{
     const r=await fetch(connSrc("fc"),{method:"HEAD",cache:"no-store"});
     CONN.fcOk=r.ok&&/^image\//.test(r.headers.get("content-type")||"");
-    if(CONN.fcOk){                                                              // a forecast older than MAX_AGE_H (builds failing) is not shown as the standard view
+    if(CONN.fcOk){
       try{ const j=await (await fetch(CONN.FCJ+"?v="+Math.floor(Date.now()/3e5),{cache:"no-store"})).json();
-        if(j&&j.time&&(Date.now()-Date.parse(j.time))/36e5>CONN.MAX_AGE_H) CONN.fcOk=false; }catch(e){ /* no date file: treat the picture as current */ }
+        if(j&&j.time){ CONN.age=(Date.now()-Date.parse(j.time))/36e5; CONN.made=fullT(Date.parse(j.time));
+          CONN.stale=CONN.age>CONN.FRESH_H;                                       // older than 9 hours: still available, but not the standard view
+          if(CONN.age>CONN.HIDE_H) CONN.fcOk=false; } }                           // older than 2 days: not shown at all
+      catch(e){ /* no date file: treat the picture as current */ }
     }
   }catch(e){ CONN.fcOk=false; }
-  document.getElementById("connsw").hidden=!CONN.fcOk;                         // the switch only appears when a current forecast exists
-  setConn(CONN.fcOk?"fc":"now");                                               // the forecast is the standard view
+  document.getElementById("connsw").hidden=!CONN.fcOk;
+  setConn(CONN.fcOk&&!CONN.stale?"fc":"now");                                     // a current forecast is the standard view
 }
 document.getElementById("conn-now").addEventListener("click",()=>setConn("now"));
 document.getElementById("conn-fc").addEventListener("click",()=>setConn("fc"));
