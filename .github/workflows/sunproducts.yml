@@ -26,7 +26,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 22            # normal runs take 4 to 9 minutes; if something stalls, stop it so the next run can go
+    timeout-minutes: 26            # normal runs take 4 to 9 minutes; if something stalls, stop it so the next run can go
     steps:
       - uses: actions/checkout@v4
 
@@ -66,11 +66,13 @@ jobs:
         run: pip install -r code/requirements.txt
 
       - name: Build site
-        timeout-minutes: 11
+        timeout-minutes: 13
         run: |
           mkdir -p site
           cp space_weather_dashboard.html site/index.html
-          python code/earth_connectivity.py --maps-only --no-url \
+          # If an outside data service has a bad moment, the script can stop part-way. That must not stop the new page going live:
+          # whatever it could not make is copied from the live site afterwards (the page shows each picture's own time).
+          timeout 600 python code/earth_connectivity.py --maps-only --no-url \
             --ch-names-file code/ch_names.txt \
             --sun-image site/sun_193_annotated_latest.png \
             --share-image site/share_card.png \
@@ -84,7 +86,9 @@ jobs:
             --aia-extra-dir site \
             --lasco-dir site \
             --hmi-dir site \
-            --out site/earth_connectivity_now.png
+            --out site/earth_connectivity_now.png \
+            || echo "::warning::The build script did not finish, so missing pictures are copied from the live site"
+          python code/carry_over.py site https://forecast.stephyardley.com
           ls -la site
 
       # The connectivity FORECAST (the Forecast button): driven by NOAA's WSA-Enlil predicted wind speed, about 1.5 minutes of work.
